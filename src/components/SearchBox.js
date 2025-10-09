@@ -18,7 +18,7 @@ const SearchBox = ({ search, setSearch }) => (
     <Searchbar
       placeholder="Search for furniture..."
       value={search}
-      onChangeText={setSearch}
+      onChangeText={(text) => setSearch(text)}     
       style={{
         backgroundColor: colors.white,
         borderRadius: 14,
