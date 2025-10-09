@@ -1,9 +1,9 @@
-// src/screens/UserHomeScreen.js
 import React, { useEffect, useState } from "react";
 import { View, FlatList } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { db } from "../firebase";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, addDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth"; 
 import Header from "../components/Header";
 import SearchBox from "../components/SearchBox";
 import CategoryList from "../components/CategoryList";
@@ -17,6 +17,10 @@ export default function UserHomeScreen() {
   const [selected, setSelected] = useState("All");
   const [loading, setLoading] = useState(true);
 
+  const auth = getAuth();
+  const user = auth.currentUser; 
+  const userId = user?.uid;
+
   useEffect(() => {
     const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -27,7 +31,7 @@ export default function UserHomeScreen() {
     });
     return () => unsub();
   }, []);
-//search and filter logic
+
   const handleSearch = (text) => {
     setSearch(text);
     filterProducts(text, selected);
@@ -71,6 +75,29 @@ export default function UserHomeScreen() {
       </View>
     );
 
+  const handleAddToCart = async (item) => {
+    if (!userId) {
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "cart"), {
+        userId: userId, 
+        productId: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        quantity: 1,
+        checked: false,
+        createdAt: new Date(),
+      });
+      
+    } catch (error) {
+      
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, padding: 16 }}>
       <Header />
@@ -94,7 +121,7 @@ export default function UserHomeScreen() {
             marginTop: 30,
           }}
         >
-          No products found 
+          No products found
         </Text>
       ) : (
         <FlatList
@@ -108,7 +135,7 @@ export default function UserHomeScreen() {
           contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item }) => (
             <View style={{ flex: 1, marginBottom: 16, marginHorizontal: 4 }}>
-              <ProductCard item={item} />
+              <ProductCard item={item} onAddToCart={handleAddToCart} />
             </View>
           )}
         />

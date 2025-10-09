@@ -2,18 +2,17 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import UserHomeScreen from "../screens/UserHomeScreen";
+import CartScreen from "../screens/CartScreen";
 import { View, Text } from "react-native";
 import colors from "../constants/colors";
+import { createStackNavigator } from "@react-navigation/stack";
+import CheckoutScreen from "../screens/CheckoutScreen";
+import SuccessOrderScreen from "../screens/SuccessScreen";
+
 
 const FavoritesScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>Favorites Screen</Text>
-  </View>
-);
-
-const CartScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Cart Screen</Text>
   </View>
 );
 
@@ -24,8 +23,8 @@ const ProfileScreen = () => (
 );
 
 const Tab = createBottomTabNavigator();
-
-export default function UserTabNavigator() {
+const Stack = createStackNavigator();
+ function UserTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -36,7 +35,7 @@ export default function UserTabNavigator() {
           backgroundColor: colors.white,
           borderTopWidth: 0,
           elevation: 5,
-          height: 65,
+          height: 95,
           paddingBottom: 8,
         },
         tabBarLabelStyle: {
@@ -86,5 +85,14 @@ export default function UserTabNavigator() {
         }}
       />
     </Tab.Navigator>
+  );
+}
+export default function UserTabNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={UserTabs} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="Success" component={SuccessOrderScreen} />
+    </Stack.Navigator>
   );
 }

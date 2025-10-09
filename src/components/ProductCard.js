@@ -3,7 +3,6 @@ import React from 'react';
 import { View, Image, TouchableOpacity } from 'react-native';
 import { Text, Card, IconButton } from 'react-native-paper';
 import colors from '../constants/colors';
-
 export default function ProductCard({ item, onPress, onAddToCart }) {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
