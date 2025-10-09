@@ -36,7 +36,7 @@ export default function UserHomeScreen({ navigation }) {
   const user = auth.currentUser;
   const userId = user?.uid;
 
-  // Fetch products
+  // ✅ Fetch products
   useEffect(() => {
     const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -48,7 +48,7 @@ export default function UserHomeScreen({ navigation }) {
     return () => unsub();
   }, []);
 
-  // Fetch favorites
+
   useEffect(() => {
     if (user) dispatch(fetchFavorites());
   }, [user, dispatch]);
@@ -77,7 +77,7 @@ export default function UserHomeScreen({ navigation }) {
     filterProducts(search, cat);
   };
 
-  // ✅ إضافة إلى الكارت
+  // ✅ Add to Cart
   const handleAddToCart = async (item) => {
     if (!userId) return;
     try {
@@ -97,7 +97,7 @@ export default function UserHomeScreen({ navigation }) {
     }
   };
 
-  // ✅ حذف من الكارت
+
   const handleRemoveFromCart = async (item) => {
     if (!userId) return;
     try {
@@ -114,6 +114,14 @@ export default function UserHomeScreen({ navigation }) {
       console.error("Error removing from cart:", error);
     }
   };
+
+  
+  useEffect(() => {
+    const favoritesCount = favorites?.length || 0;
+    navigation.setOptions({
+      tabBarBadge: favoritesCount > 0 ? favoritesCount : undefined,
+    });
+  }, [favorites, navigation]);
 
   if (loading) {
     return (

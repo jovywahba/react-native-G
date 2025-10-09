@@ -1,4 +1,4 @@
-// src/store.js
+
 import { configureStore } from "@reduxjs/toolkit";
 import favoritesReducer from "./favoritesSlice";
 

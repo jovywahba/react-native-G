@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Image, TouchableOpacity } from "react-native";
 import { Text, Card, IconButton } from "react-native-paper";
 import colors from "../constants/colors";
 import { useDispatch } from "react-redux";
-import { toggleFavoriteLocal, toggleFavoriteInFirebase } from "../favoritesSlice";
+import { toggleFavoriteInFirebase } from "../favoritesSlice";
 
 export default function ProductCard({
   item,
@@ -14,17 +14,12 @@ export default function ProductCard({
 }) {
   const dispatch = useDispatch();
   const isFav = favorites.includes(item.id);
-
-  // حالة المنتج في الكارت
   const [isInCart, setIsInCart] = useState(false);
 
-  // عند الضغط على القلب
   const handleFavorite = () => {
-    dispatch(toggleFavoriteLocal(item.id));
     dispatch(toggleFavoriteInFirebase(item.id));
   };
 
-  // عند الضغط على أيقونة الكارت
   const handleCartPress = () => {
     if (isInCart) {
       onRemoveFromCart && onRemoveFromCart(item);
