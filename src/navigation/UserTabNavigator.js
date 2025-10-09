@@ -4,6 +4,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import colors from "../constants/colors";
+import { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // Screens
 import UserHomeScreen from "../screens/UserHomeScreen";
@@ -36,6 +40,21 @@ function HomeStack() {
 }
 
 function UserTabs() {
+    const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const user = getAuth().currentUser;
+    if (!user) return;
+
+    const q = query(collection(db, "cart"), where("userId", "==", user.uid));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setCartCount(snapshot.docs.length);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // تأكيد إن الفيفوريت مصفوفة فعلاً
   const favorites = useSelector(
     (state) => Array.isArray(state.favorites.items) ? state.favorites.items : []
@@ -100,8 +119,10 @@ function UserTabs() {
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="cart-outline" color={color} size={26} />
           ),
+          tabBarBadge: cartCount > 0 ? cartCount : undefined,
         }}
       />
+
 
       <Tab.Screen
         name="Profile"
