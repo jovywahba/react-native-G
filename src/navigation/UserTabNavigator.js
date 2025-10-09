@@ -1,30 +1,44 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import UserHomeScreen from "../screens/UserHomeScreen";
-import CartScreen from "../screens/CartScreen";
+import { useSelector } from "react-redux";
 import { View, Text } from "react-native";
 import colors from "../constants/colors";
-import { createStackNavigator } from "@react-navigation/stack";
 import CheckoutScreen from "../screens/CheckoutScreen";
 import SuccessOrderScreen from "../screens/SuccessScreen";
 
+// Screens
+import UserHomeScreen from "../screens/UserHomeScreen";
+import CartScreen from "../screens/CartScreen";
+import DetailsScreen from "../screens/DetailsScreen";
+import WishlistScreen from "../screens/WhishlistScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 
-const FavoritesScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Favorites Screen</Text>
-  </View>
-);
-
-const ProfileScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Profile Screen</Text>
-  </View>
-);
-
-const Tab = createBottomTabNavigator();
+// Stack للـ Home + Details
 const Stack = createStackNavigator();
- function UserTabs() {
+const Tab = createBottomTabNavigator();
+
+function HomeStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="UserHome"
+        component={UserHomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="DetailsScreen"
+        component={DetailsScreen}
+        options={{ title: "Product Details" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function UserTabs() {
+  const favorites = useSelector((state) => state.favorites.items || []);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -46,7 +60,7 @@ const Stack = createStackNavigator();
     >
       <Tab.Screen
         name="Home"
-        component={UserHomeScreen}
+        component={HomeStack}
         options={{
           tabBarLabel: "Home",
           tabBarIcon: ({ color }) => (
@@ -54,16 +68,19 @@ const Stack = createStackNavigator();
           ),
         }}
       />
+
       <Tab.Screen
         name="Favorites"
-        component={FavoritesScreen}
+        component={WishlistScreen}
         options={{
           tabBarLabel: "Favorites",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="heart-outline" color={color} size={26} />
           ),
+          tabBarBadge: favorites.length > 0 ? favorites.length : null,
         }}
       />
+
       <Tab.Screen
         name="Cart"
         component={CartScreen}
@@ -74,6 +91,7 @@ const Stack = createStackNavigator();
           ),
         }}
       />
+
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -87,6 +105,7 @@ const Stack = createStackNavigator();
     </Tab.Navigator>
   );
 }
+
 export default function UserTabNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

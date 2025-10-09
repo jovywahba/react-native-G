@@ -1,8 +1,10 @@
 // App.js
 import React from "react";
 import { Provider as PaperProvider, MD3LightTheme } from "react-native-paper";
+import { Provider as ReduxProvider } from "react-redux";
+import { store } from "./src/store";
 import AuthProvider from "./src/context/AuthContext";
-import RootNavigator from "./src/navigation/RootNavigator";
+import RootNavigator from "./src/navigation/RootNavigator"; 
 import colors from "./src/constants/colors";
 
 const theme = {
@@ -22,9 +24,11 @@ const theme = {
 export default function App() {
   return (
     <PaperProvider theme={theme}>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
+      <ReduxProvider store={store}>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </ReduxProvider>
     </PaperProvider>
   );
 }

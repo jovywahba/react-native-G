@@ -2,25 +2,41 @@ import React, { useEffect, useState } from "react";
 import { View, FlatList } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { db } from "../firebase";
-import { collection, onSnapshot, orderBy, query, addDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth"; 
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  addDoc,
+  doc,
+  deleteDoc,
+  getDocs,
+  where,
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFavorites, toggleFavoriteInFirebase } from "../favoritesSlice";
+
 import Header from "../components/Header";
 import SearchBox from "../components/SearchBox";
 import CategoryList from "../components/CategoryList";
 import ProductCard from "../components/ProductCard";
 import colors from "../constants/colors";
 
-export default function UserHomeScreen() {
+export default function UserHomeScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("All");
   const [loading, setLoading] = useState(true);
 
+  const dispatch = useDispatch();
+  const favorites = useSelector((state) => state.favorites.items || []);
   const auth = getAuth();
-  const user = auth.currentUser; 
+  const user = auth.currentUser;
   const userId = user?.uid;
 
+  // Fetch products
   useEffect(() => {
     const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -32,6 +48,11 @@ export default function UserHomeScreen() {
     return () => unsub();
   }, []);
 
+  // Fetch favorites
+  useEffect(() => {
+    if (user) dispatch(fetchFavorites());
+  }, [user, dispatch]);
+
   const handleSearch = (text) => {
     setSearch(text);
     filterProducts(text, selected);
@@ -39,20 +60,15 @@ export default function UserHomeScreen() {
 
   const filterProducts = (searchText, category) => {
     let data = [...products];
-
     if (category !== "All") {
       data = data.filter(
-        (item) =>
-          item.category &&
-          item.category.toLowerCase() === category.toLowerCase()
+        (item) => item.category?.toLowerCase() === category.toLowerCase()
       );
     }
-
     if (searchText.trim()) {
       const s = searchText.toLowerCase();
       data = data.filter((item) => item.name.toLowerCase().includes(s));
     }
-
     setFiltered(data);
   };
 
@@ -61,7 +77,45 @@ export default function UserHomeScreen() {
     filterProducts(search, cat);
   };
 
-  if (loading)
+  // ✅ إضافة إلى الكارت
+  const handleAddToCart = async (item) => {
+    if (!userId) return;
+    try {
+      await addDoc(collection(db, "cart"), {
+        userId: userId,
+        productId: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        quantity: 1,
+        checked: false,
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      console.log("Error adding to cart:", error);
+    }
+  };
+
+  // ✅ حذف من الكارت
+  const handleRemoveFromCart = async (item) => {
+    if (!userId) return;
+    try {
+      const cartQuery = query(
+        collection(db, "cart"),
+        where("userId", "==", userId),
+        where("productId", "==", item.id)
+      );
+      const snapshot = await getDocs(cartQuery);
+      snapshot.forEach(async (docSnap) => {
+        await deleteDoc(doc(db, "cart", docSnap.id));
+      });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+    }
+  };
+
+  if (loading) {
     return (
       <View
         style={{
@@ -74,43 +128,18 @@ export default function UserHomeScreen() {
         <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
-
-  const handleAddToCart = async (item) => {
-    if (!userId) {
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, "cart"), {
-        userId: userId, 
-        productId: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        imageUrl: item.imageUrl,
-        quantity: 1,
-        checked: false,
-        createdAt: new Date(),
-      });
-      
-    } catch (error) {
-      
-    }
-  };
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, padding: 16 }}>
       <Header />
-
       <SearchBox search={search} setSearch={handleSearch} />
-
       <Text
         variant="titleMedium"
         style={{ marginBottom: 10, color: colors.text }}
       >
         Categories
       </Text>
-
       <CategoryList selected={selected} setSelected={handleCategoryChange} />
 
       {filtered.length === 0 ? (
@@ -129,13 +158,22 @@ export default function UserHomeScreen() {
           numColumns={2}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          columnWrapperStyle={{
-            justifyContent: "space-between",
-          }}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
           contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item }) => (
             <View style={{ flex: 1, marginBottom: 16, marginHorizontal: 4 }}>
-              <ProductCard item={item} onAddToCart={handleAddToCart} />
+              <ProductCard
+                item={item}
+                onAddToCart={() => handleAddToCart(item)}
+                onRemoveFromCart={() => handleRemoveFromCart(item)}
+                onPress={() =>
+                  navigation.navigate("DetailsScreen", { product: item })
+                }
+                favorites={favorites}
+                onToggleFavorite={(id) =>
+                  dispatch(toggleFavoriteInFirebase(id))
+                }
+              />
             </View>
           )}
         />
