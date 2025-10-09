@@ -1,16 +1,36 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSelector } from "react-redux";
 import UserHomeScreen from "../screens/UserHomeScreen";
+import DetailsScreen from "../screens/DetailsScreen";
+import WishlistScreen from "../screens/WhishlistScreen";
 import { View, Text } from "react-native";
 import colors from "../constants/colors";
 
-const FavoritesScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Favorites Screen</Text>
-  </View>
-);
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
+// Stack للـ Home + Details
+function HomeStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="UserHome"
+        component={UserHomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="DetailsScreen"
+        component={DetailsScreen}
+        options={{ title: "Product Details" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Tabs الباقية (Cart و Profile)
 const CartScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>Cart Screen</Text>
@@ -23,9 +43,9 @@ const ProfileScreen = () => (
   </View>
 );
 
-const Tab = createBottomTabNavigator();
-
 export default function UserTabNavigator() {
+  const favorites = useSelector((state) => state.favorites.items || []);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -47,7 +67,7 @@ export default function UserTabNavigator() {
     >
       <Tab.Screen
         name="Home"
-        component={UserHomeScreen}
+        component={HomeStack}
         options={{
           tabBarLabel: "Home",
           tabBarIcon: ({ color }) => (
@@ -57,12 +77,13 @@ export default function UserTabNavigator() {
       />
       <Tab.Screen
         name="Favorites"
-        component={FavoritesScreen}
+        component={WishlistScreen}
         options={{
           tabBarLabel: "Favorites",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="heart-outline" color={color} size={26} />
           ),
+          tabBarBadge: favorites.length > 0 ? favorites.length : null,
         }}
       />
       <Tab.Screen
