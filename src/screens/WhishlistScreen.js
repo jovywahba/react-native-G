@@ -3,9 +3,10 @@ import { View, FlatList, Image, TouchableOpacity, StyleSheet, StatusBar } from "
 import { Text, ActivityIndicator } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchFavorites, toggleFavoriteLocal, toggleFavoriteInFirebase } from "../favoritesSlice";
+import { fetchFavorites, toggleFavoriteInFirebase } from "../favoritesSlice";
 import { db } from "../firebase";
 import { collection, onSnapshot } from "firebase/firestore";
+
 
 export default function WishlistScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ export default function WishlistScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // جلب جميع المنتجات
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "products"), (snap) => {
       const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -23,9 +25,10 @@ export default function WishlistScreen({ navigation }) {
     return () => unsub();
   }, []);
 
+  // جلب الفيفوريت من Firebase عند التحميل
   useEffect(() => {
     dispatch(fetchFavorites());
-  }, []);
+  }, [dispatch]);
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
 
@@ -39,8 +42,16 @@ export default function WishlistScreen({ navigation }) {
         data={favoriteProducts}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, paddingTop: 40 }}
         columnWrapperStyle={{ justifyContent: "space-between", marginBottom: 16 }}
+        ListHeaderComponent={
+          <View style={{ alignItems: "center", marginBottom: 25 }}>
+            <Text style={{ fontSize: 26, fontWeight: "bold", color: "#264653", letterSpacing: 1 }}>
+              Wishlist 
+            </Text>
+            <View style={{ width: 60, height: 3, backgroundColor: "#2A9D8F", marginTop: 6, borderRadius: 2 }} />
+          </View>
+        }
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.imageContainer}>
@@ -52,12 +63,13 @@ export default function WishlistScreen({ navigation }) {
 
               <TouchableOpacity
                 style={styles.heartButton}
-                onPress={() => {
-                  dispatch(toggleFavoriteLocal(item.id));
-                  dispatch(toggleFavoriteInFirebase(item.id));
-                }}
+                onPress={() => dispatch(toggleFavoriteInFirebase(item.id))}
               >
-                <Ionicons name="heart" size={20} color="red" />
+                <Ionicons
+                  name={favorites.includes(item.id) ? "heart" : "heart-outline"}
+                  size={20}
+                  color={favorites.includes(item.id) ? "red" : "#455A64"}
+                />
               </TouchableOpacity>
             </View>
 

@@ -3,10 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { View, Text } from "react-native";
 import colors from "../constants/colors";
-import CheckoutScreen from "../screens/CheckoutScreen";
-import SuccessOrderScreen from "../screens/SuccessScreen";
 
 // Screens
 import UserHomeScreen from "../screens/UserHomeScreen";
@@ -14,11 +11,13 @@ import CartScreen from "../screens/CartScreen";
 import DetailsScreen from "../screens/DetailsScreen";
 import WishlistScreen from "../screens/WhishlistScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import CheckoutScreen from "../screens/CheckoutScreen";
+import SuccessOrderScreen from "../screens/SuccessScreen";
 
-// Stack للـ Home + Details
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+//  Stack خاص بالـ Home + Details
 function HomeStack() {
   return (
     <Stack.Navigator>
@@ -37,7 +36,18 @@ function HomeStack() {
 }
 
 function UserTabs() {
-  const favorites = useSelector((state) => state.favorites.items || []);
+  // تأكيد إن الفيفوريت مصفوفة فعلاً
+  const favorites = useSelector(
+    (state) => Array.isArray(state.favorites.items) ? state.favorites.items : []
+  );
+
+  console.log("💡 Favorites in Tab:", favorites);
+
+  // لو فعلاً في منتجات فقط وقتها نعرض الرقم
+  const favoritesCount =
+    favorites && Array.isArray(favorites) && favorites.length > 0
+      ? favorites.length
+      : undefined;
 
   return (
     <Tab.Navigator
@@ -77,7 +87,8 @@ function UserTabs() {
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="heart-outline" color={color} size={26} />
           ),
-          tabBarBadge: favorites.length > 0 ? favorites.length : null,
+          //  الرقم يظهر بس لو فيه عناصر فعلاً
+          tabBarBadge: favoritesCount,
         }}
       />
 

@@ -13,12 +13,13 @@ export const fetchFavorites = createAsyncThunk(
     return docSnap.exists() ? docSnap.data().items || [] : [];
   }
 );
+
 export const toggleFavoriteInFirebase = createAsyncThunk(
   "favorites/toggleFavoriteInFirebase",
   async (productId, { getState }) => {
     const user = getAuth().currentUser;
-    if (!user) 
-        return [];
+    if (!user) return [];
+
     const currentFavs = getState().favorites.items || [];
     let newFavs = [];
 
@@ -28,7 +29,9 @@ export const toggleFavoriteInFirebase = createAsyncThunk(
       newFavs = [...currentFavs, productId];
     }
 
-    await setDoc(doc(db, "favorites", user.uid), { items: newFavs });
+    
+    await setDoc(doc(db, "favorites", user.uid), { items: newFavs }, { merge: true });
+
     return newFavs;
   }
 );
@@ -37,32 +40,23 @@ const favoritesSlice = createSlice({
   name: "favorites",
   initialState: { items: [], status: "idle" },
   reducers: {
-    toggleFavoriteLocal: (state, action) => {
-      const productId = action.payload;
-      if (!Array.isArray(state.items)) {
-        state.items = [];
-      }
-
-      if (state.items.includes(productId)) {
-        state.items = state.items.filter((id) => id !== productId);
-      } else {
-        state.items.push(productId);
-      }
-    },
+    // لحذف الفيفوريت عند تسجيل الخروج
     clearFavorites: (state) => {
       state.items = [];
     },
   },
   extraReducers: (builder) => {
     builder
+      // عند تحميل الفيفوريت من فايربيز
       .addCase(fetchFavorites.fulfilled, (state, action) => {
         state.items = Array.isArray(action.payload) ? action.payload : [];
       })
+      // عند التبديل (إضافة/حذف) الفيفوريت
       .addCase(toggleFavoriteInFirebase.fulfilled, (state, action) => {
         state.items = Array.isArray(action.payload) ? action.payload : [];
       });
   },
 });
 
-export const { toggleFavoriteLocal, clearFavorites } = favoritesSlice.actions;
+export const { clearFavorites } = favoritesSlice.actions;
 export default favoritesSlice.reducer;
