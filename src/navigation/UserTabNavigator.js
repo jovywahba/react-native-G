@@ -2,9 +2,11 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import UserHomeScreen from "../screens/UserHomeScreen";
+import ProfileScreen from "../screens/ProfileScreen"; // ✅ صفحة البروفايل الجديدة
 import { View, Text } from "react-native";
 import colors from "../constants/colors";
 
+// شاشات مؤقتة بسيطة
 const FavoritesScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>Favorites Screen</Text>
@@ -14,12 +16,6 @@ const FavoritesScreen = () => (
 const CartScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>Cart Screen</Text>
-  </View>
-);
-
-const ProfileScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Profile Screen</Text>
   </View>
 );
 
@@ -51,37 +47,56 @@ export default function UserTabNavigator() {
         options={{
           tabBarLabel: "Home",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="home-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="home-outline"
+              color={color}
+              size={26}
+            />
           ),
         }}
       />
+
       <Tab.Screen
         name="Favorites"
         component={FavoritesScreen}
         options={{
           tabBarLabel: "Favorites",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="heart-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="heart-outline"
+              color={color}
+              size={26}
+            />
           ),
         }}
       />
+
       <Tab.Screen
         name="Cart"
         component={CartScreen}
         options={{
           tabBarLabel: "Cart",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="cart-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="cart-outline"
+              color={color}
+              size={26}
+            />
           ),
         }}
       />
+
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="account-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="account-outline"
+              color={color}
+              size={26}
+            />
           ),
         }}
       />
