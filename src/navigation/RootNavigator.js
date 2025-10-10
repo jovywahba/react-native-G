@@ -1,4 +1,3 @@
-// src/navigation/RootNavigator.js
 import React, { useContext } from "react";
 import { View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -11,7 +10,9 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import AdminHomeScreen from "../screens/AdminHomeScreen";
 import AddProductScreen from "../screens/AddProductScreen";
-import UserTabNavigator from "../navigation/UserTabNavigator"; // 👈 الهوم بتاعة اليوزر
+import UserTabNavigator from "../navigation/UserTabNavigator";
+
+import AdminOrdersScreen from "../screens/AdminOrdersScreen";
 
 const Stack = createStackNavigator();
 const AdminStack = createStackNavigator();
@@ -29,6 +30,12 @@ function AdminNavigator() {
         component={AddProductScreen}
         options={{ title: "Add Product" }}
       />
+      {/* controle screen*/}
+      <AdminStack.Screen
+        name="AdminOrders"
+        component={AdminOrdersScreen}
+        options={{ title: "Manage Orders" }}
+      />
     </AdminStack.Navigator>
   );
 }
@@ -36,7 +43,6 @@ function AdminNavigator() {
 export default function RootNavigator() {
   const { user, profile, loading } = useContext(AuthContext);
 
-  // ✅ أول حاجة: لو لسه بيحمّل أو بيجيب البروفايل من Firestore
   if (loading || (user && !profile)) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -48,7 +54,6 @@ export default function RootNavigator() {
     );
   }
 
-  // ✅ بعد ما يجهز، نقرر يروح فين
   if (user && profile) {
     const isAdmin = profile.userType === "admin";
 
@@ -69,7 +74,6 @@ export default function RootNavigator() {
     );
   }
 
-  // ✅ لو مفيش يوزر (لسه داخل لأول مرة)
   return (
     <NavigationContainer>
       <Stack.Navigator>

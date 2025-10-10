@@ -30,7 +30,10 @@ const CheckoutScreen = () => {
         const user = auth.currentUser;
         if (!user) return;
 
-        const cartRef = query(collection(db, "cart"), where("userId", "==", user.uid));
+        const cartRef = query(
+          collection(db, "cart"),
+          where("userId", "==", user.uid)
+        );
         const snapshot = await getDocs(cartRef);
 
         const cartItems = snapshot.docs.map((doc) => ({
@@ -55,66 +58,80 @@ const CheckoutScreen = () => {
   }, [items]);
 
   const handleConfirmOrder = async () => {
-  const user = auth.currentUser;
-  if (!user) {
-    Alert.alert("Error", "User not logged in.");
-    return;
-  }
-
-  if (!fullName.trim() || !phone.trim() || !address.trim()) {
-    Alert.alert("Missing Information", "Please fill in all required fields.");
-    return;
-  }
-
-  if (items.length === 0) {
-    Alert.alert("Empty Cart", "Your cart is empty.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const orderData = {
-      userId: user.uid,
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-      total: Number(total) || 0,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      items: items.map((i) => ({
-        productId: i.productId || i.id || "unknown_product",
-        name: i.name || "Unnamed Product",
-        desc: i.desc || "",
-        price: Number(i.price) || 0,
-        quantity: Number(i.quantity) || 1,
-        image: i.image || null,
-      })),
-    };
-
-
-    await addDoc(collection(db, "orders"), orderData);
-
-    for (const item of items) {
-      await deleteDoc(doc(db, "cart", item.id));
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Error", "User not logged in.");
+      return;
     }
 
-    navigation.navigate("Success");
-  } catch (error) {
-    console.error("Error confirming order:", error);
-    Alert.alert("Error", "Something went wrong while confirming your order.");
-  } finally {
-    setLoading(false);
-  }
-};
+    if (!fullName.trim() || !phone.trim() || !address.trim()) {
+      Alert.alert("Missing Information", "Please fill in all required fields.");
+      return;
+    }
 
+    if (items.length === 0) {
+      Alert.alert("Empty Cart", "Your cart is empty.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+
+      const orderNumber = Math.floor(100000 + Math.random() * 900000); // رقم أوردر عشوائي
+      const now = new Date().toISOString();
+
+      const orderData = {
+        userId: user.uid,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        total: Number(total) || 0,
+        status: "Pending",
+        orderNumber, 
+        createdAt: now,
+        items: items.map((i) => ({
+          productId: i.productId || i.id || "unknown_product",
+          name: i.name || "Unnamed Product",
+          desc: i.desc || "",
+          price: Number(i.price) || 0,
+          quantity: Number(i.quantity) || 1,
+          image: i.image || null,
+        })),
+        statusHistory: [
+          {
+            status: "Pending",
+            changedAt: now,
+          },
+        ], 
+      };
+
+      
+      await addDoc(collection(db, "orders"), orderData);
+
+      
+      for (const item of items) {
+        await deleteDoc(doc(db, "cart", item.id));
+      }
+
+      navigation.navigate("Success");
+    } catch (error) {
+      console.error("Error confirming order:", error);
+      Alert.alert("Error", "Something went wrong while confirming your order.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Appbar.Header style={{ backgroundColor: "#fff" }} mode="center-aligned">
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Checkout" />
-        <Appbar.Action icon="cart-outline" onPress={() => navigation.goBack()} />
+        <Appbar.Action
+          icon="cart-outline"
+          onPress={() => navigation.goBack()}
+        />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
