@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Image } from "react-native";
+import { View, Image, ScrollView } from "react-native";
 import { Text, TextInput, Button, HelperText, Card } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { useForm, Controller } from "react-hook-form";
@@ -25,7 +25,12 @@ export default function AddProductScreen({ navigation }) {
   const [uploading, setUploading] = useState(false);
   const [imageUri, setImageUri] = useState(null);
 
-  const { control, handleSubmit, formState: { errors }, reset } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
     resolver: yupResolver(schema),
     defaultValues: { name: "", description: "", price: "", stock: "" },
   });
@@ -53,13 +58,17 @@ export default function AddProductScreen({ navigation }) {
     const ext = uri.split(".").pop() || "jpg";
     const filePath = `products/${uuidv4()}.${ext}`;
 
-    const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, blob, {
-      upsert: false,
-      contentType: blob.type || "image/jpeg",
-    });
+    const { error } = await supabase.storage
+      .from(SUPABASE_BUCKET)
+      .upload(filePath, blob, {
+        upsert: false,
+        contentType: blob.type || "image/jpeg",
+      });
     if (error) throw error;
 
-    const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+    const { data } = supabase.storage
+      .from(SUPABASE_BUCKET)
+      .getPublicUrl(filePath);
     return { filePath, publicUrl: data.publicUrl };
   };
 
@@ -102,8 +111,12 @@ export default function AddProductScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: "#fff" }}>
-      <Text variant="headlineMedium" style={{ fontWeight: "700" }}>Add Product</Text>
+    <ScrollView
+      style={{ flex: 1, padding: 16, gap: 12, backgroundColor: "#fff" }}
+    >
+      <Text variant="headlineMedium" style={{ fontWeight: "700" }}>
+        Add Product
+      </Text>
 
       <Card style={{ borderRadius: 16, padding: 12 }}>
         <Card.Content style={{ gap: 12 }}>
@@ -112,8 +125,15 @@ export default function AddProductScreen({ navigation }) {
             name="name"
             render={({ field: { onChange, value } }) => (
               <>
-                <TextInput label="Product name" mode="outlined" value={value} onChangeText={onChange} />
-                <HelperText type="error" visible={!!errors.name}>{errors.name?.message}</HelperText>
+                <TextInput
+                  label="Product name"
+                  mode="outlined"
+                  value={value}
+                  onChangeText={onChange}
+                />
+                <HelperText type="error" visible={!!errors.name}>
+                  {errors.name?.message}
+                </HelperText>
               </>
             )}
           />
@@ -123,8 +143,16 @@ export default function AddProductScreen({ navigation }) {
             name="description"
             render={({ field: { onChange, value } }) => (
               <>
-                <TextInput label="Description" mode="outlined" value={value} onChangeText={onChange} multiline />
-                <HelperText type="error" visible={!!errors.description}>{errors.description?.message}</HelperText>
+                <TextInput
+                  label="Description"
+                  mode="outlined"
+                  value={value}
+                  onChangeText={onChange}
+                  multiline
+                />
+                <HelperText type="error" visible={!!errors.description}>
+                  {errors.description?.message}
+                </HelperText>
               </>
             )}
           />
@@ -134,8 +162,16 @@ export default function AddProductScreen({ navigation }) {
             name="price"
             render={({ field: { onChange, value } }) => (
               <>
-                <TextInput label="Price" mode="outlined" value={String(value)} onChangeText={onChange} keyboardType="decimal-pad" />
-                <HelperText type="error" visible={!!errors.price}>{errors.price?.message}</HelperText>
+                <TextInput
+                  label="Price"
+                  mode="outlined"
+                  value={String(value)}
+                  onChangeText={onChange}
+                  keyboardType="decimal-pad"
+                />
+                <HelperText type="error" visible={!!errors.price}>
+                  {errors.price?.message}
+                </HelperText>
               </>
             )}
           />
@@ -145,8 +181,16 @@ export default function AddProductScreen({ navigation }) {
             name="stock"
             render={({ field: { onChange, value } }) => (
               <>
-                <TextInput label="Stock" mode="outlined" value={String(value)} onChangeText={onChange} keyboardType="number-pad" />
-                <HelperText type="error" visible={!!errors.stock}>{errors.stock?.message}</HelperText>
+                <TextInput
+                  label="Stock"
+                  mode="outlined"
+                  value={String(value)}
+                  onChangeText={onChange}
+                  keyboardType="number-pad"
+                />
+                <HelperText type="error" visible={!!errors.stock}>
+                  {errors.stock?.message}
+                </HelperText>
               </>
             )}
           />
@@ -155,14 +199,27 @@ export default function AddProductScreen({ navigation }) {
             {imageUri ? "Change image" : "Pick image"}
           </Button>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={{ width: "100%", height: 180, borderRadius: 12, marginTop: 8 }} />
+            <Image
+              source={{ uri: imageUri }}
+              style={{
+                width: "100%",
+                height: 180,
+                borderRadius: 12,
+                marginTop: 8,
+              }}
+            />
           ) : null}
 
-          <Button mode="contained" onPress={handleSubmit(onSubmit)} loading={uploading} disabled={uploading}>
+          <Button
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
+            loading={uploading}
+            disabled={uploading}
+          >
             Save Product
           </Button>
         </Card.Content>
       </Card>
-    </View>
+    </ScrollView>
   );
 }

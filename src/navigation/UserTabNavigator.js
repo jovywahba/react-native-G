@@ -17,7 +17,7 @@ import WishlistScreen from "../screens/WhishlistScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
 import SuccessOrderScreen from "../screens/SuccessScreen";
-
+import UserOrdersScreen from "../screens/UserOrdersScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -40,7 +40,7 @@ function HomeStack() {
 }
 
 function UserTabs() {
-    const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const user = getAuth().currentUser;
@@ -56,8 +56,8 @@ function UserTabs() {
   }, []);
 
   // تأكيد إن الفيفوريت مصفوفة فعلاً
-  const favorites = useSelector(
-    (state) => Array.isArray(state.favorites.items) ? state.favorites.items : []
+  const favorites = useSelector((state) =>
+    Array.isArray(state.favorites.items) ? state.favorites.items : []
   );
 
   console.log("💡 Favorites in Tab:", favorites);
@@ -93,7 +93,11 @@ function UserTabs() {
         options={{
           tabBarLabel: "Home",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="home-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="home-outline"
+              color={color}
+              size={26}
+            />
           ),
         }}
       />
@@ -104,9 +108,13 @@ function UserTabs() {
         options={{
           tabBarLabel: "Favorites",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="heart-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="heart-outline"
+              color={color}
+              size={26}
+            />
           ),
-          //  الرقم يظهر بس لو فيه عناصر فعلاً
+         
           tabBarBadge: favoritesCount,
         }}
       />
@@ -117,12 +125,24 @@ function UserTabs() {
         options={{
           tabBarLabel: "Cart",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="cart-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="cart-outline"
+              color={color}
+              size={26}
+            />
           ),
           tabBarBadge: cartCount > 0 ? cartCount : undefined,
         }}
       />
 
+      <Tab.Screen
+        name="Orders"
+        component={UserOrdersScreen}
+        options={{
+          tabBarLabel: "My Orders",
+          headerTitle: "My Orders",
+        }}
+      />
 
       <Tab.Screen
         name="Profile"
@@ -130,7 +150,11 @@ function UserTabs() {
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="account-outline" color={color} size={26} />
+            <MaterialCommunityIcons
+              name="account-outline"
+              color={color}
+              size={26}
+            />
           ),
         }}
       />
