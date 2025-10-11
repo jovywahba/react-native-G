@@ -1,11 +1,12 @@
 // src/screens/AdminHomeScreen.js
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useLayoutEffect } from "react";
 import {
   View,
   FlatList,
   RefreshControl,
   ScrollView,
-  TouchableOpacity,
+  Alert,
+  Image,
 } from "react-native";
 import {
   Text,
@@ -13,23 +14,54 @@ import {
   Card,
   ActivityIndicator,
   Divider,
+  IconButton,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import {
   collection,
   query,
   orderBy,
   onSnapshot,
   limit,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
-import ProductItem from "../components/ProductItem";
+import { signOut } from "firebase/auth";
+import { supabase, SUPABASE_BUCKET } from "../supabase";
 import colors from "../constants/colors";
 
 export default function AdminHomeScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // ⬅️ خلّي أزرار البروفايل/الخروج في هيدر الستاك
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Dashboard",
+      headerRight: () => (
+        <View style={{ flexDirection: "row" }}>
+          <IconButton
+            icon="account-circle"
+            onPress={() => navigation.navigate("AdminProfile")}
+            accessibilityLabel="Profile"
+          />
+          <IconButton
+            icon="logout"
+            onPress={async () => {
+              try {
+                await signOut(auth);
+              } catch (e) {
+                Alert.alert("Error", e?.message || "Sign out failed");
+              }
+            }}
+            accessibilityLabel="Sign out"
+          />
+        </View>
+      ),
+    });
+  }, [navigation]);
 
   // 🟢 تحميل المنتجات
   useEffect(() => {
@@ -54,6 +86,70 @@ export default function AdminHomeScreen({ navigation }) {
     setTimeout(() => setRefreshing(false), 400);
   }, []);
 
+  const handleDelete = useCallback(async (product) => {
+    Alert.alert("Delete", "Are you sure you want to delete this product?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteDoc(doc(db, "products", product.id));
+            if (product.imagePath) {
+              await supabase.storage
+                .from(SUPABASE_BUCKET)
+                .remove([product.imagePath])
+                .catch(() => {});
+            }
+            setProducts((prev) => prev.filter((p) => p.id !== product.id));
+          } catch (e) {
+            console.error(e);
+            Alert.alert("Error", e.message || "Delete failed");
+          }
+        },
+      },
+    ]);
+  }, []);
+
+  const ProductCard = ({ item }) => (
+    <Card style={{ borderRadius: 12, overflow: "hidden", backgroundColor: "#fff" }}>
+      {item.imageUrl ? (
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={{ width: "100%", height: 160 }}
+          resizeMode="cover"
+        />
+      ) : null}
+
+      <Card.Title
+        title={item.name}
+        subtitle={`$${item.price} • ${item.category || "-"}`}
+        right={(props) => (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <IconButton
+              {...props}
+              icon="pencil"
+              onPress={() => navigation.navigate("EditProduct", { id: item.id })}
+              accessibilityLabel="Edit product"
+            />
+            <IconButton
+              {...props}
+              icon="delete"
+              onPress={() => handleDelete(item)}
+              accessibilityLabel="Delete product"
+            />
+          </View>
+        )}
+      />
+      <Card.Content style={{ paddingTop: 0 }}>
+        {!!item.description && (
+          <Text style={{ color: "#444" }} numberOfLines={3}>
+            {item.description}
+          </Text>
+        )}
+      </Card.Content>
+    </Card>
+  );
 
   if (loading) {
     return (
@@ -78,8 +174,10 @@ export default function AdminHomeScreen({ navigation }) {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-   
         <Text
           style={{
             fontSize: 24,
@@ -134,7 +232,6 @@ export default function AdminHomeScreen({ navigation }) {
           </Button>
         </View>
 
-   
         <Card
           style={{
             borderRadius: 18,
@@ -157,8 +254,7 @@ export default function AdminHomeScreen({ navigation }) {
           </Text>
           <Divider style={{ marginVertical: 10 }} />
           <Text style={{ color: "#444", fontSize: 15 }}>
-            Total Products:{" "}
-            <Text style={{ fontWeight: "700" }}>{products.length}</Text>
+            Total Products: <Text style={{ fontWeight: "700" }}>{products.length}</Text>
           </Text>
           <Text style={{ color: "#444", fontSize: 15 }}>
             Orders: <Text style={{ fontWeight: "700" }}>View in "Orders"</Text>
@@ -193,17 +289,9 @@ export default function AdminHomeScreen({ navigation }) {
           <FlatList
             data={products}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{
-              gap: 12,
-              paddingBottom: 40,
-            }}
+            contentContainerStyle={{ gap: 12, paddingBottom: 40 }}
             scrollEnabled={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            renderItem={({ item }) => (
-              <ProductItem item={item} style={{ marginBottom: 8 }} />
-            )}
+            renderItem={({ item }) => <ProductCard item={item} />}
           />
         )}
       </ScrollView>

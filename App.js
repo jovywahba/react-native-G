@@ -8,7 +8,7 @@ import AuthProvider from "./src/context/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import colors from "./src/constants/colors";
 import "./src/localization/i18n";
-import LanguageSwitcher from "./src/components/LanguageSwitcher"; // ✅ أضفنا الزرار هنا
+import LanguageSwitcher from "./src/components/LanguageSwitcher";
 
 const theme = {
   ...MD3LightTheme,
@@ -29,7 +29,15 @@ export default function App() {
     <PaperProvider theme={theme}>
       <ReduxProvider store={store}>
         <AuthProvider>
-          <View style={{ flex: 1 }}>
+          <View
+            style={{
+              flex: 1,
+              height: "100vh",   // ✅ يكفي
+              // 👇 احذف السطرين دول لو كانوا موجودين قبل كده:
+              // maxHeight: "100vh",
+              // overflow: "hidden",
+            }}
+          >
             <LanguageSwitcher />
             <RootNavigator />
           </View>
