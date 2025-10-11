@@ -1,5 +1,11 @@
 import * as React from "react";
-import { View, Image, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { Text, Button, IconButton, Divider } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -62,12 +68,12 @@ const DetailsScreen = ({ route, navigation }) => {
           </View>
         </View>
 
-        <Text style={styles.subtitle}>{product.category || "Category"}</Text>
+        <Text style={styles.subtitle}>{product.category || "الفئة"}</Text>
         <Text style={styles.description}>{product.description}</Text>
 
         <Divider style={{ marginVertical: 15 }} />
 
-        <Text style={styles.sectionTitle}>Color</Text>
+        <Text style={styles.sectionTitle}>اللون</Text>
         <View style={styles.colorRow}>
           {["#4E8C7E", "#B0B0B0", "#E53935"].map((color) => (
             <TouchableOpacity
@@ -124,7 +130,7 @@ const DetailsScreen = ({ route, navigation }) => {
             navigation.navigate("Cart");
           }}
         >
-          Add to Cart   ${product.price * quantity}
+          أضف إلى السلة ${product.price * quantity}
         </Button>
       </View>
     </ScrollView>
@@ -185,5 +191,9 @@ const styles = StyleSheet.create({
   },
   counterText: { fontSize: 18, color: "#264653" },
   quantityText: { fontSize: 16, fontWeight: "bold", color: "#264653" },
-  cartButton: { backgroundColor: "#264653", borderRadius: 20, paddingVertical: 6 },
+  cartButton: {
+    backgroundColor: "#264653",
+    borderRadius: 20,
+    paddingVertical: 6,
+  },
 });

@@ -6,10 +6,14 @@ import { useForm, Controller } from "react-hook-form";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { useTranslation } from "react-i18next";
 
 export default function LoginScreen({ navigation }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const { control, handleSubmit } = useForm({ defaultValues: { identifier: "", password: "" } });
+  const { control, handleSubmit } = useForm({
+    defaultValues: { identifier: "", password: "" },
+  });
 
   const signIn = async ({ identifier, password }) => {
     setLoading(true);
@@ -21,7 +25,7 @@ export default function LoginScreen({ navigation }) {
         const uname = identifier.toLowerCase();
         const snap = await getDoc(doc(db, "usernames", uname));
         if (!snap.exists()) {
-          alert("Username not found");
+          alert(t("username_not_found"));
           return;
         }
         emailToUse = snap.data().email;
@@ -38,19 +42,21 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, padding: 16, justifyContent: "center" }}>
-      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Welcome back</Text>
+      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>
+        {t("welcome_back")}
+      </Text>
 
       <Controller
         control={control}
         name="identifier"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            label="Email or Username"
+            label={t("email_or_username")}
             mode="outlined"
             value={value}
             onChangeText={onChange}
             autoCapitalize="none"
-            placeholder="you@example.com OR jovy"
+            placeholder={t("email_or_username_placeholder")}
             style={{ marginBottom: 12 }}
           />
         )}
@@ -61,7 +67,7 @@ export default function LoginScreen({ navigation }) {
         name="password"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            label="Password"
+            label={t("password")}
             mode="outlined"
             value={value}
             onChangeText={onChange}
@@ -71,12 +77,21 @@ export default function LoginScreen({ navigation }) {
         )}
       />
 
-      <Button mode="contained" onPress={handleSubmit(signIn)} loading={loading} disabled={loading}>
-        Login
+      <Button
+        mode="contained"
+        onPress={handleSubmit(signIn)}
+        loading={loading}
+        disabled={loading}
+      >
+        {t("login")}
       </Button>
 
-      <Button mode="text" onPress={() => navigation.navigate("Register")} style={{ marginTop: 8 }}>
-        Create new account
+      <Button
+        mode="text"
+        onPress={() => navigation.navigate("Register")}
+        style={{ marginTop: 8 }}
+      >
+        {t("create_new_account")}
       </Button>
     </View>
   );

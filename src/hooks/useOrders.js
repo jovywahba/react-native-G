@@ -10,11 +10,15 @@ import {
   updateOrderStatusOnServer,
   fetchOrdersOnce,
 } from "../Redux/ordersSlice";
+import { useTranslation } from "react-i18next";
 
-const STATUS_FLOW = ["Pending", "Processing", "Shipped", "Delivered"];
+// ⚙️ الحالات الأساسية (بالإنجليزية فقط)
+const BASE_STATUS_FLOW = ["Pending", "Processing", "Shipped", "Delivered"];
 
 export default function useOrders() {
   const dispatch = useDispatch();
+  const { t } = useTranslation(); // ⬅️ إضافة الترجمة هنا
+
   const {
     items = [],
     loading = false,
@@ -42,18 +46,18 @@ export default function useOrders() {
     return () => unsub();
   }, [dispatch]);
 
-  // عدادات لكل حالة + all
+  // ✅ عدادات الحالات
   const counts = useMemo(() => {
     const map = { All: items.length };
-    STATUS_FLOW.forEach((s) => (map[s] = 0));
+    BASE_STATUS_FLOW.forEach((s) => (map[s] = 0));
     items.forEach((o) => {
       const s = o.status || "Pending";
       if (map[s] !== undefined) map[s] += 1;
     });
-    return map; // { All: x, Pending: y, ... }
+    return map;
   }, [items]);
 
-  // فلترة
+  // ✅ فلترة الطلبات
   const filterBy = useCallback(
     (status) => {
       if (!status || status === "All") return items;
@@ -62,25 +66,25 @@ export default function useOrders() {
     [items]
   );
 
-  // next/prev status calculation
+  // ✅ الحالات التالية والسابقة
   const getNextStatus = useCallback((current) => {
-    const idx = STATUS_FLOW.indexOf(current);
-    return idx >= 0 && idx < STATUS_FLOW.length - 1
-      ? STATUS_FLOW[idx + 1]
+    const idx = BASE_STATUS_FLOW.indexOf(current);
+    return idx >= 0 && idx < BASE_STATUS_FLOW.length - 1
+      ? BASE_STATUS_FLOW[idx + 1]
       : null;
   }, []);
+
   const getPrevStatus = useCallback((current) => {
-    const idx = STATUS_FLOW.indexOf(current);
-    return idx > 0 ? STATUS_FLOW[idx - 1] : null;
+    const idx = BASE_STATUS_FLOW.indexOf(current);
+    return idx > 0 ? BASE_STATUS_FLOW[idx - 1] : null;
   }, []);
 
+  // ✅ تغيير الحالة
   const changeStatus = useCallback(
     async (orderId, newStatus) => {
       try {
         const changedAt = new Date().toISOString();
-
         dispatch(updateOrderLocal({ orderId, newStatus, changedAt }));
-
         await dispatch(
           updateOrderStatusOnServer({ orderId, newStatus })
         ).unwrap();
@@ -92,7 +96,6 @@ export default function useOrders() {
     [dispatch]
   );
 
-  // helper: move forward / backward (if possible)
   const moveNext = useCallback(
     (order) => {
       const next = getNextStatus(order.status || "Pending");
@@ -111,10 +114,16 @@ export default function useOrders() {
     [changeStatus, getPrevStatus]
   );
 
-  // manual refresh (fallback): fetch once
+  // ✅ تحديث يدوي
   const refresh = useCallback(() => {
     dispatch(fetchOrdersOnce());
   }, [dispatch]);
+
+  // 🈯 تحويل الحالات لترجمة (للاستخدام في الفلتر)
+  const STATUS_FLOW = BASE_STATUS_FLOW.map((status) => ({
+    key: status,
+    label: t(status.toLowerCase()), // ⬅️ هنا الترجمة
+  }));
 
   return {
     orders: items,

@@ -1,13 +1,14 @@
-import React from "react";
+// src/navigation/UserTabNavigator.js
+import React, { useEffect, useState } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import colors from "../constants/colors";
-import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { useTranslation } from "react-i18next";
 
 // Screens
 import UserHomeScreen from "../screens/UserHomeScreen";
@@ -18,11 +19,14 @@ import ProfileScreen from "../screens/ProfileScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
 import SuccessOrderScreen from "../screens/SuccessScreen";
 import UserOrdersScreen from "../screens/UserOrdersScreen";
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-//  Stack خاص بالـ Home + Details
+// Stack خاص بالـ Home + Details
 function HomeStack() {
+  const { t } = useTranslation();
+
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -33,13 +37,14 @@ function HomeStack() {
       <Stack.Screen
         name="DetailsScreen"
         component={DetailsScreen}
-        options={{ title: "Product Details" }}
+        options={{ title: t("product_details") }}
       />
     </Stack.Navigator>
   );
 }
 
 function UserTabs() {
+  const { t } = useTranslation();
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
@@ -60,9 +65,6 @@ function UserTabs() {
     Array.isArray(state.favorites.items) ? state.favorites.items : []
   );
 
-  console.log("💡 Favorites in Tab:", favorites);
-
-  // لو فعلاً في منتجات فقط وقتها نعرض الرقم
   const favoritesCount =
     favorites && Array.isArray(favorites) && favorites.length > 0
       ? favorites.length
@@ -91,7 +93,7 @@ function UserTabs() {
         name="Home"
         component={HomeStack}
         options={{
-          tabBarLabel: "Home",
+          tabBarLabel: t("tabs_home"),
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="home-outline"
@@ -106,7 +108,7 @@ function UserTabs() {
         name="Favorites"
         component={WishlistScreen}
         options={{
-          tabBarLabel: "Favorites",
+          tabBarLabel: t("tabs_favorites"),
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="heart-outline"
@@ -114,7 +116,6 @@ function UserTabs() {
               size={26}
             />
           ),
-         
           tabBarBadge: favoritesCount,
         }}
       />
@@ -123,7 +124,7 @@ function UserTabs() {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarLabel: "Cart",
+          tabBarLabel: t("tabs_cart"),
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="cart-outline"
@@ -139,8 +140,8 @@ function UserTabs() {
         name="Orders"
         component={UserOrdersScreen}
         options={{
-          tabBarLabel: "My Orders",
-          headerTitle: "My Orders",
+          tabBarLabel: t("tabs_orders"),
+          headerTitle: t("tabs_orders"),
         }}
       />
 
@@ -148,7 +149,7 @@ function UserTabs() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: "Profile",
+          tabBarLabel: t("tabs_profile"),
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="account-outline"

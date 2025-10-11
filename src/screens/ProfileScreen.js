@@ -1,13 +1,23 @@
 import React, { useContext, useState } from "react";
-import {  View,  Text,  Image,  TouchableOpacity,  ActivityIndicator,  Modal,  TextInput,} from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+} from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import colors from "../constants/colors";
-import styles from "../styles/ProfileScreen.styles"; 
+import styles from "../styles/ProfileScreen.styles";
+import { useTranslation } from "react-i18next";
 
 export default function ProfileScreen({ navigation }) {
+  const { t } = useTranslation();
   const { user, profile, loading, logout } = useContext(AuthContext);
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState(profile?.username || "");
@@ -61,7 +71,7 @@ export default function ProfileScreen({ navigation }) {
   if (!user) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: colors.gray }}>No user logged in</Text>
+        <Text style={{ color: colors.gray }}>{t("no_user_logged_in")}</Text>
       </View>
     );
   }
@@ -82,11 +92,15 @@ export default function ProfileScreen({ navigation }) {
           style={styles.avatar}
         />
         <TouchableOpacity style={styles.editIcon} onPress={handleEditPress}>
-          <MaterialCommunityIcons name="pencil" color={colors.white} size={18} />
+          <MaterialCommunityIcons
+            name="pencil"
+            color={colors.white}
+            size={18}
+          />
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.username}>{localProfile?.username || "User"}</Text>
+      <Text style={styles.username}>{localProfile?.username || t("user")}</Text>
       <Text style={styles.email}>{user.email}</Text>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -96,14 +110,14 @@ export default function ProfileScreen({ navigation }) {
           size={22}
           style={{ marginRight: 8 }}
         />
-        <Text style={styles.logoutText}>Log Out</Text>
+        <Text style={styles.logoutText}>{t("log_out")}</Text>
       </TouchableOpacity>
 
       {/* Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
+            <Text style={styles.modalTitle}>{t("edit_profile")}</Text>
 
             <Image
               source={{
@@ -113,12 +127,14 @@ export default function ProfileScreen({ navigation }) {
             />
 
             <TouchableOpacity style={styles.changePicBtn} disabled>
-              <Text style={{ color: colors.gray }}>Change photo (coming soon)</Text>
+              <Text style={{ color: colors.gray }}>
+                {t("change_photo_coming_soon")}
+              </Text>
             </TouchableOpacity>
 
             <TextInput
               style={styles.input}
-              placeholder="Enter new username"
+              placeholder={t("enter_new_username")}
               value={username}
               onChangeText={setUsername}
             />
@@ -129,12 +145,12 @@ export default function ProfileScreen({ navigation }) {
               disabled={saving}
             >
               <Text style={styles.saveText}>
-                {saving ? "Saving..." : "Save Changes"}
+                {saving ? t("saving") : t("save_changes")}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t("cancel")}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -4,6 +4,7 @@ import { Text, Card, IconButton } from "react-native-paper";
 import colors from "../constants/colors";
 import { useDispatch } from "react-redux";
 import { toggleFavoriteInFirebase } from "../favoritesSlice";
+import { useTranslation } from "react-i18next";
 
 export default function ProductCard({
   item,
@@ -15,6 +16,7 @@ export default function ProductCard({
   const dispatch = useDispatch();
   const isFav = favorites.includes(item.id);
   const [isInCart, setIsInCart] = useState(false);
+  const { t } = useTranslation();
 
   const handleFavorite = () => {
     dispatch(toggleFavoriteInFirebase(item.id));
@@ -78,7 +80,7 @@ export default function ProductCard({
             style={{ color: colors.grayText, fontSize: 13 }}
             numberOfLines={2}
           >
-            {item.description}
+            {t(item.description)}
           </Text>
 
           <View

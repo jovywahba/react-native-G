@@ -1,3 +1,4 @@
+// src/screens/CheckoutScreen.js
 import React, { useEffect, useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Alert } from "react-native";
 import { Appbar, Text, TextInput } from "react-native-paper";
@@ -14,8 +15,10 @@ import {
 } from "firebase/firestore";
 import CartItem from "../components/CartItem";
 import CartFooter from "../components/CartFooter";
+import { useTranslation } from "react-i18next";
 
 const CheckoutScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,25 +63,24 @@ const CheckoutScreen = () => {
   const handleConfirmOrder = async () => {
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert("Error", "User not logged in.");
+      Alert.alert(t("error"), t("user_not_logged_in"));
       return;
     }
 
     if (!fullName.trim() || !phone.trim() || !address.trim()) {
-      Alert.alert("Missing Information", "Please fill in all required fields.");
+      Alert.alert(t("missing_info"), t("fill_required_fields"));
       return;
     }
 
     if (items.length === 0) {
-      Alert.alert("Empty Cart", "Your cart is empty.");
+      Alert.alert(t("empty_cart"), t("cart_is_empty"));
       return;
     }
 
     try {
       setLoading(true);
 
-
-      const orderNumber = Math.floor(100000 + Math.random() * 900000); // رقم أوردر عشوائي
+      const orderNumber = Math.floor(100000 + Math.random() * 900000);
       const now = new Date().toISOString();
 
       const orderData = {
@@ -88,11 +90,11 @@ const CheckoutScreen = () => {
         address: address.trim(),
         total: Number(total) || 0,
         status: "Pending",
-        orderNumber, 
+        orderNumber,
         createdAt: now,
         items: items.map((i) => ({
           productId: i.productId || i.id || "unknown_product",
-          name: i.name || "Unnamed Product",
+          name: i.name || t("unnamed_product"),
           desc: i.desc || "",
           price: Number(i.price) || 0,
           quantity: Number(i.quantity) || 1,
@@ -103,13 +105,11 @@ const CheckoutScreen = () => {
             status: "Pending",
             changedAt: now,
           },
-        ], 
+        ],
       };
 
-      
       await addDoc(collection(db, "orders"), orderData);
 
-      
       for (const item of items) {
         await deleteDoc(doc(db, "cart", item.id));
       }
@@ -117,7 +117,7 @@ const CheckoutScreen = () => {
       navigation.navigate("Success");
     } catch (error) {
       console.error("Error confirming order:", error);
-      Alert.alert("Error", "Something went wrong while confirming your order.");
+      Alert.alert(t("error"), t("order_failed"));
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ const CheckoutScreen = () => {
     <View style={styles.container}>
       <Appbar.Header style={{ backgroundColor: "#fff" }} mode="center-aligned">
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Checkout" />
+        <Appbar.Content title={t("checkout")} />
         <Appbar.Action
           icon="cart-outline"
           onPress={() => navigation.goBack()}
@@ -139,21 +139,21 @@ const CheckoutScreen = () => {
           <CartItem key={item.id} item={item} readonly />
         ))}
 
-        <Text style={styles.formTitle}>Enter Shipping Details</Text>
+        <Text style={styles.formTitle}>{t("enter_shipping_details")}</Text>
 
         <TextInput
-          label="Full Name*"
+          label={t("full_name")}
           mode="outlined"
           value={fullName}
           onChangeText={setFullName}
-          placeholder="Enter Full Name"
+          placeholder={t("enter_full_name")}
           style={styles.input}
           outlineColor="#E5E5E5"
           activeOutlineColor="#395457"
         />
 
         <TextInput
-          label="Phone Number*"
+          label={t("phone_number")}
           mode="outlined"
           value={phone}
           onChangeText={setPhone}
@@ -165,11 +165,11 @@ const CheckoutScreen = () => {
         />
 
         <TextInput
-          label="Address*"
+          label={t("address")}
           mode="outlined"
           value={address}
           onChangeText={setAddress}
-          placeholder="Enter address"
+          placeholder={t("enter_address")}
           style={styles.input}
           outlineColor="#E5E5E5"
           activeOutlineColor="#395457"
@@ -177,8 +177,8 @@ const CheckoutScreen = () => {
       </ScrollView>
 
       <CartFooter
-        title={loading ? "Processing..." : "Confirm Order"}
-        totaltext="Total"
+        title={loading ? t("processing") : t("confirm_order")}
+        totaltext={t("total")}
         total={total}
         onCheckout={handleConfirmOrder}
         textitem="(items)"

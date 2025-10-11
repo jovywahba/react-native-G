@@ -15,8 +15,10 @@ import {
 } from "firebase/firestore";
 import CartItem from "../components/CartItem";
 import CartFooter from "../components/CartFooter";
+import { useTranslation } from "react-i18next";
 
 const CartScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [items, setItems] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -25,12 +27,15 @@ const CartScreen = () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    const cartRef = query(collection(db, "cart"), where("userId", "==", user.uid));
+    const cartRef = query(
+      collection(db, "cart"),
+      where("userId", "==", user.uid)
+    );
 
     const unsubscribe = onSnapshot(
       cartRef,
       (snapshot) => {
-        if (isUpdating) return; 
+        if (isUpdating) return;
         const cartItems = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -60,14 +65,15 @@ const CartScreen = () => {
       const newQty = Number(cartItem.quantity) + delta;
 
       if (delta > 0 && newQty > currentStock) {
-        Alert.alert("Not enough stock", `Only ${currentStock} items available.`);
+        Alert.alert(
+          t("error"),
+          t("insufficient_stock", { stock: currentStock })
+        );
         return;
       }
 
       setItems((prev) =>
-        prev.map((i) =>
-          i.id === id ? { ...i, quantity: newQty } : i
-        )
+        prev.map((i) => (i.id === id ? { ...i, quantity: newQty } : i))
       );
 
       setIsUpdating(true);
@@ -113,14 +119,14 @@ const CartScreen = () => {
   const handleDeleteChecked = async () => {
     const checkedItems = items.filter((i) => i.checked);
     if (checkedItems.length === 0) {
-      Alert.alert("Notice", "No selected products to delete.");
+      Alert.alert(t("notice"), t("no_items_selected"));
       return;
     }
 
-    Alert.alert("Confirm", "Delete selected products?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("confirm"), t("delete_selected_items"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("delete"),
         style: "destructive",
         onPress: async () => {
           setIsUpdating(true);
@@ -142,9 +148,12 @@ const CartScreen = () => {
 
   return (
     <>
-      <Appbar.Header style={{ backgroundColor: "#F9FAF9" }} mode="center-aligned">
+      <Appbar.Header
+        style={{ backgroundColor: "#F9FAF9" }}
+        mode="center-aligned"
+      >
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Cart" />
+        <Appbar.Content title={t("tabs_cart")} />
         <Appbar.Action icon="delete" onPress={handleDeleteChecked} />
       </Appbar.Header>
 
@@ -167,9 +176,9 @@ const CartScreen = () => {
         <CartFooter
           total={total}
           itemCount={itemCount}
-          title="Proceed to Checkout"
-          totaltext="Total:"
-          textitem="(items)"
+          title={t("cart_proceed_checkout")}
+          totaltext={t("cart_total")}
+          textitem={`(${t("cart_items")})`}
           onCheckout={() => navigation.navigate("Checkout")}
         />
       </View>
