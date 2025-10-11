@@ -10,8 +10,9 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import AdminHomeScreen from "../screens/AdminHomeScreen";
 import AddProductScreen from "../screens/AddProductScreen";
-import UserTabNavigator from "../navigation/UserTabNavigator";
-
+import EditProductScreen from "../screens/EditProductScreen";
+import AdminProfileScreen from "../screens/AdminProfileScreen";
+import UserTabNavigator from "./UserTabNavigator";
 import AdminOrdersScreen from "../screens/AdminOrdersScreen";
 
 const Stack = createStackNavigator();
@@ -28,13 +29,30 @@ function AdminNavigator() {
       <AdminStack.Screen
         name="AddProduct"
         component={AddProductScreen}
-        options={{ title: "Add Product" }}
+        options={{
+          title: "Add Product",
+          headerShown: true,
+          headerBackTitleVisible: false,
+        }}
       />
-      {/* controle screen*/}
+      <AdminStack.Screen
+        name="EditProduct"
+        component={EditProductScreen}
+        options={{
+          title: "Edit Product",
+          headerShown: true,
+          headerBackTitleVisible: false,
+        }}
+      />
       <AdminStack.Screen
         name="AdminOrders"
         component={AdminOrdersScreen}
         options={{ title: "Manage Orders" }}
+      />
+      <AdminStack.Screen
+        name="AdminProfile"
+        component={AdminProfileScreen}
+        options={{ title: "Profile" }}
       />
     </AdminStack.Navigator>
   );
@@ -56,7 +74,6 @@ export default function RootNavigator() {
 
   if (user && profile) {
     const isAdmin = profile.userType === "admin";
-
     return (
       <NavigationContainer>
         {isAdmin ? (
