@@ -6,10 +6,11 @@ import { useForm, Controller } from "react-hook-form";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { useTranslation } from "react-i18next";
 
 export default function LoginScreen({ navigation }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
   const { control, handleSubmit } = useForm({
     defaultValues: { identifier: "", password: "" },
   });
@@ -25,7 +26,7 @@ export default function LoginScreen({ navigation }) {
         const uname = emailToUse.toLowerCase();
         const snap = await getDoc(doc(db, "usernames", uname));
         if (!snap.exists()) {
-          setErr("Username not found");
+          alert(t("username_not_found"));
           return;
         }
         emailToUse = snap.data().email;
@@ -43,7 +44,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <View style={{ flex: 1, padding: 16, justifyContent: "center" }}>
       <Text variant="headlineMedium" style={{ marginBottom: 16 }}>
-        Welcome back
+        {t("welcome_back")}
       </Text>
 
       <Controller
@@ -51,11 +52,12 @@ export default function LoginScreen({ navigation }) {
         name="identifier"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            label="Email or Username"
+            label={t("email_or_username")}
             mode="outlined"
             value={value}
             onChangeText={onChange}
             autoCapitalize="none"
+            placeholder={t("email_or_username_placeholder")}
             style={{ marginBottom: 12 }}
           />
         )}
@@ -66,7 +68,7 @@ export default function LoginScreen({ navigation }) {
         name="password"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            label="Password"
+            label={t("password")}
             mode="outlined"
             value={value}
             onChangeText={onChange}
@@ -82,7 +84,7 @@ export default function LoginScreen({ navigation }) {
         loading={loading}
         disabled={loading}
       >
-        Login
+        {t("login")}
       </Button>
 
       <Button
@@ -90,7 +92,7 @@ export default function LoginScreen({ navigation }) {
         onPress={() => navigation.navigate("Register")}
         style={{ marginTop: 8 }}
       >
-        Create new account
+        {t("create_new_account")}
       </Button>
 
       <Snackbar
