@@ -8,35 +8,48 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-
-const schema = Yup.object({
-  username: Yup.string().trim().min(3).max(20)
-    .matches(/^[a-z0-9_]+$/i, "Letters, numbers, _ only")
-    .required(),
-  email: Yup.string().email().required(),
-  password: Yup.string().min(6).required(),
-  confirmPassword: Yup.string().oneOf([Yup.ref("password")], "Passwords must match").required(),
-});
+import { useTranslation } from "react-i18next";
 
 export default function RegisterScreen({ navigation }) {
+  const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
-  const { control, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(schema) });
+
+  const schema = Yup.object({
+    username: Yup.string()
+      .trim()
+      .min(3)
+      .max(20)
+      .matches(/^[a-z0-9_]+$/i, t("letters_numbers_underscore_only"))
+      .required(),
+    email: Yup.string().email().required(),
+    password: Yup.string().min(6).required(),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password")], t("passwords_must_match"))
+      .required(),
+  });
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ resolver: yupResolver(schema) });
 
   const onSubmit = async (values) => {
     setSubmitting(true);
     const usernameLower = values.username.toLowerCase();
     try {
-      // 1) انشئ حساب
-      const cred = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        values.password
+      );
       await updateProfile(cred.user, { displayName: values.username });
 
-      // 2) احجز اليوزرنيم (لو doc موجود أصلاً، القاعدة هتمنع create => ترمي خطأ)
       await setDoc(doc(db, "usernames", usernameLower), {
         uid: cred.user.uid,
-        email: values.email, // علشان نستخدمه في اللوجين من غير قراءة users قبل Auth
+        email: values.email,
       });
 
-      // 3) أنشئ بروفايل اليوزر
       await setDoc(doc(db, "users", cred.user.uid), {
         uid: cred.user.uid,
         email: values.email,
@@ -46,15 +59,18 @@ export default function RegisterScreen({ navigation }) {
         createdAt: serverTimestamp(),
       });
 
-      alert("Account created!");
+      alert(t("account_created"));
     } catch (err) {
-      // لو فشل حجز اليوزرنيم (موجود)، ممكن نعمل رولباك بسيط
       if (auth.currentUser) {
-        try { await deleteDoc(doc(db, "users", auth.currentUser.uid)); } catch {}
+        try {
+          await deleteDoc(doc(db, "users", auth.currentUser.uid));
+        } catch {}
       }
-      alert(err.message.includes("PERMISSION_DENIED") || err.message.includes("already exists")
-        ? "Username already taken, try another one."
-        : err.message
+      alert(
+        err.message.includes("PERMISSION_DENIED") ||
+          err.message.includes("already exists")
+          ? t("username_already_taken")
+          : err.message
       );
     } finally {
       setSubmitting(false);
@@ -63,15 +79,25 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, padding: 16, justifyContent: "center" }}>
-      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Create account</Text>
+      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>
+        {t("create_account")}
+      </Text>
 
       <Controller
         control={control}
         name="username"
         render={({ field: { onChange, value } }) => (
           <>
-            <TextInput label="Username" mode="outlined" value={value} onChangeText={onChange} autoCapitalize="none" />
-            <HelperText type="error" visible={!!errors.username}>{errors.username?.message}</HelperText>
+            <TextInput
+              label={t("username")}
+              mode="outlined"
+              value={value}
+              onChangeText={onChange}
+              autoCapitalize="none"
+            />
+            <HelperText type="error" visible={!!errors.username}>
+              {errors.username?.message}
+            </HelperText>
           </>
         )}
       />
@@ -81,9 +107,17 @@ export default function RegisterScreen({ navigation }) {
         name="email"
         render={({ field: { onChange, value } }) => (
           <>
-            <TextInput label="Email" mode="outlined" value={value} onChangeText={onChange}
-                       keyboardType="email-address" autoCapitalize="none" />
-            <HelperText type="error" visible={!!errors.email}>{errors.email?.message}</HelperText>
+            <TextInput
+              label={t("email")}
+              mode="outlined"
+              value={value}
+              onChangeText={onChange}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <HelperText type="error" visible={!!errors.email}>
+              {errors.email?.message}
+            </HelperText>
           </>
         )}
       />
@@ -93,8 +127,16 @@ export default function RegisterScreen({ navigation }) {
         name="password"
         render={({ field: { onChange, value } }) => (
           <>
-            <TextInput label="Password" mode="outlined" value={value} onChangeText={onChange} secureTextEntry />
-            <HelperText type="error" visible={!!errors.password}>{errors.password?.message}</HelperText>
+            <TextInput
+              label={t("password")}
+              mode="outlined"
+              value={value}
+              onChangeText={onChange}
+              secureTextEntry
+            />
+            <HelperText type="error" visible={!!errors.password}>
+              {errors.password?.message}
+            </HelperText>
           </>
         )}
       />
@@ -104,18 +146,36 @@ export default function RegisterScreen({ navigation }) {
         name="confirmPassword"
         render={({ field: { onChange, value } }) => (
           <>
-            <TextInput label="Confirm Password" mode="outlined" value={value} onChangeText={onChange} secureTextEntry />
-            <HelperText type="error" visible={!!errors.confirmPassword}>{errors.confirmPassword?.message}</HelperText>
+            <TextInput
+              label={t("confirm_password")}
+              mode="outlined"
+              value={value}
+              onChangeText={onChange}
+              secureTextEntry
+            />
+            <HelperText type="error" visible={!!errors.confirmPassword}>
+              {errors.confirmPassword?.message}
+            </HelperText>
           </>
         )}
       />
 
-      <Button mode="contained" onPress={handleSubmit(onSubmit)} loading={submitting} disabled={submitting} style={{ marginTop: 8 }}>
-        Register
+      <Button
+        mode="contained"
+        onPress={handleSubmit(onSubmit)}
+        loading={submitting}
+        disabled={submitting}
+        style={{ marginTop: 8 }}
+      >
+        {t("register")}
       </Button>
 
-      <Button mode="text" onPress={() => navigation.navigate("Login")} style={{ marginTop: 8 }}>
-        Have an account? Login
+      <Button
+        mode="text"
+        onPress={() => navigation.navigate("Login")}
+        style={{ marginTop: 8 }}
+      >
+        {t("have_account_login")}
       </Button>
     </View>
   );

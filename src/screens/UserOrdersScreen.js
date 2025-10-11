@@ -1,19 +1,15 @@
 // src/screens/UserOrdersScreen.js
 import React, { useContext, useEffect, useState } from "react";
-import {
-  View,
-  FlatList,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { View, FlatList, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text, Card, ActivityIndicator, Chip } from "react-native-paper";
 import { AuthContext } from "../context/AuthContext";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
+import { useTranslation } from "react-i18next";
 
 export default function UserOrdersScreen() {
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +64,7 @@ export default function UserOrdersScreen() {
       >
         <ActivityIndicator size="large" />
         <Text style={{ marginTop: 10, fontSize: 16 }}>
-          Loading your orders...
+          {t("loading_orders")}
         </Text>
       </SafeAreaView>
     );
@@ -79,7 +75,7 @@ export default function UserOrdersScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       >
-        {/* ✅ العنوان */}
+        {/* العنوان */}
         <Text
           style={{
             fontSize: 24,
@@ -88,10 +84,10 @@ export default function UserOrdersScreen() {
             marginBottom: 16,
           }}
         >
-          My Orders
+          {t("orders")}
         </Text>
 
-        {/* ✅ فلاتر الحالات */}
+        {/* فلاتر الحالات */}
         <View
           style={{
             flexDirection: "row",
@@ -115,13 +111,13 @@ export default function UserOrdersScreen() {
                   fontWeight: "600",
                 }}
               >
-                {status}
+                {t(status.toLowerCase())}
               </Chip>
             )
           )}
         </View>
 
-        {/* req content*/}
+        {/* محتوى الطلبات */}
         {filteredOrders.length === 0 ? (
           <View
             style={{
@@ -132,11 +128,9 @@ export default function UserOrdersScreen() {
             }}
           >
             <Text style={{ fontSize: 18, color: "#94A3B8", marginBottom: 8 }}>
-              No orders found
+              {t("no_orders")}
             </Text>
-            <Text style={{ color: "#64748B" }}>
-              Try selecting another filter.
-            </Text>
+            <Text style={{ color: "#64748B" }}>{t("try_another_filter")}</Text>
           </View>
         ) : (
           <FlatList
@@ -159,7 +153,7 @@ export default function UserOrdersScreen() {
                 }}
               >
                 <Card.Content style={{ paddingVertical: 14 }}>
-                  {/* titile&status*/}
+                  {/* العنوان والحالة */}
                   <View
                     style={{
                       flexDirection: "row",
@@ -175,7 +169,7 @@ export default function UserOrdersScreen() {
                         color: "#1E293B",
                       }}
                     >
-                      Order #{item.id.slice(0, 8)}...
+                      {t("order")} #{item.id.slice(0, 8)}...
                     </Text>
                     <View
                       style={{
@@ -192,12 +186,12 @@ export default function UserOrdersScreen() {
                           fontSize: 13,
                         }}
                       >
-                        {item.status || "Pending"}
+                        {t(item.status?.toLowerCase()) || t("pending")}
                       </Text>
                     </View>
                   </View>
 
-                  {/* products */}
+                  {/* المنتجات */}
                   {item.items && item.items.length > 0 && (
                     <View
                       style={{ flexDirection: "row", alignItems: "center" }}
@@ -224,23 +218,23 @@ export default function UserOrdersScreen() {
                           {item.items[0].name}
                         </Text>
                         <Text style={{ color: "#64748B", fontSize: 13 }}>
-                          + {item.items.length - 1} more items
+                          + {item.items.length - 1} {t("more_items")}
                         </Text>
                       </View>
                     </View>
                   )}
 
-                  {/* details */}
+                  {/* التفاصيل */}
                   <View style={{ marginTop: 10 }}>
                     <Text style={{ color: "#475569", marginBottom: 2 }}>
-                      Total:{" "}
+                      {t("total")}:{" "}
                       <Text style={{ fontWeight: "600" }}>${item.total}</Text>
                     </Text>
                     <Text style={{ color: "#64748B" }}>
-                      Date:{" "}
+                      {t("date")}:{" "}
                       {item.createdAt
                         ? new Date(item.createdAt).toLocaleDateString()
-                        : "Unknown"}
+                        : t("unknown")}
                     </Text>
                   </View>
                 </Card.Content>

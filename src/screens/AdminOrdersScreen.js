@@ -1,11 +1,12 @@
-// src/screens/AdminOrdersScreen.js
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   FlatList,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  I18nManager,
+  Platform,
 } from "react-native";
 import {
   Card,
@@ -21,8 +22,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useOrders from "../hooks/useOrders";
 import colors from "../constants/colors";
+import { useTranslation } from "react-i18next";
 
 export default function AdminOrdersScreen() {
+  const { t, i18n } = useTranslation();
+
   const {
     orders,
     loading,
@@ -34,8 +38,10 @@ export default function AdminOrdersScreen() {
     getNextStatus,
     getPrevStatus,
     refresh,
-    STATUS_FLOW,
   } = useOrders();
+
+  // ✅ ثابت للحالات لضمان عمل الفلاتر حتى لو STATUS_FLOW مش متوفر من hook
+  const STATUS_FLOW = ["Pending", "Processing", "Shipped", "Delivered"];
 
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -43,29 +49,34 @@ export default function AdminOrdersScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortDesc, setSortDesc] = useState(true);
 
+  // ✅ تحديث الاتجاه بعد تغيير اللغة
+  useEffect(() => {
+    const isArabic = i18n.language.startsWith("ar");
+    I18nManager.allowRTL(isArabic);
+    I18nManager.forceRTL(isArabic);
+  }, [i18n.language]);
+
+  // ✅ فلترة وعرض اللستة
   const list = useMemo(() => {
     let filtered = filterBy(activeFilter);
-
-    // search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (order) =>
-          order.id.toLowerCase().includes(q) ||
+          order.id?.toLowerCase().includes(q) ||
           (order.fullName || "").toLowerCase().includes(q) ||
           (order.status || "").toLowerCase().includes(q)
       );
     }
-
     filtered = [...filtered].sort((a, b) => {
       const dateA = new Date(a.createdAt || 0);
       const dateB = new Date(b.createdAt || 0);
       return sortDesc ? dateB - dateA : dateA - dateB;
     });
-
     return filtered;
   }, [activeFilter, filterBy, searchQuery, sortDesc]);
 
+  // scroll for update
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -75,6 +86,23 @@ export default function AdminOrdersScreen() {
     }
   };
 
+  const statusColor = (s = "") => {
+    const key = s.toString().toLowerCase();
+    switch (key) {
+      case "pending":
+        return "#FFB74D";
+      case "processing":
+        return "#42A5F5";
+      case "shipped":
+        return "#7E57C2";
+      case "delivered":
+        return "#66BB6A";
+      default:
+        return "#9E9E9E";
+    }
+  };
+
+  //  oredr cart
   const renderOrder = ({ item }) => {
     const next = getNextStatus(item.status || "Pending");
     const prev = getPrevStatus(item.status || "Pending");
@@ -84,15 +112,13 @@ export default function AdminOrdersScreen() {
         <Card.Content>
           <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 10 }}>
-              <Text
-                style={styles.orderTitle}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
+              <Text style={styles.orderTitle} numberOfLines={1}>
                 #{item.orderNumber || item.id}
               </Text>
               <Text style={styles.subText}>{item.fullName || item.userId}</Text>
-              <Text style={styles.subText}>Total: ${item.total}</Text>
+              <Text style={styles.subText}>
+                {t("total")}: ${item.total}
+              </Text>
             </View>
 
             <Chip
@@ -102,7 +128,7 @@ export default function AdminOrdersScreen() {
               ]}
               textStyle={{ color: "#fff", fontWeight: "700" }}
             >
-              {item.status}
+              {t(item.status?.toLowerCase?.() || "unknown")}
             </Chip>
           </View>
 
@@ -117,21 +143,19 @@ export default function AdminOrdersScreen() {
               onPress={() => setSelectedOrder(item)}
               style={styles.historyBtn}
             >
-              History
+              {t("history")}
             </Button>
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <IconButton
-                icon="arrow-left"
-                mode="contained-tonal"
+                icon={I18nManager.isRTL ? "arrow-right" : "arrow-left"}
                 size={22}
                 disabled={!prev}
                 containerColor="#E0E0E0"
                 onPress={() => movePrev(item)}
               />
               <IconButton
-                icon="arrow-right"
-                mode="contained"
+                icon={I18nManager.isRTL ? "arrow-left" : "arrow-right"}
                 size={22}
                 containerColor={colors.primary}
                 iconColor="#fff"
@@ -145,47 +169,40 @@ export default function AdminOrdersScreen() {
     );
   };
 
-  function statusColor(s) {
-    switch ((s || "").toLowerCase()) {
-      case "pending":
-        return "#FFB74D";
-      case "processing":
-        return "#42A5F5";
-      case "shipped":
-        return "#7E57C2";
-      case "delivered":
-        return "#66BB6A";
-      default:
-        return "#9E9E9E";
-    }
-  }
-
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <Text style={styles.header}> Orders Dashboard</Text>
+      <View
+        style={[
+          styles.container,
+          { direction: I18nManager.isRTL ? "rtl" : "ltr" },
+        ]}
+      >
+        <Text style={styles.header}>{t("orders_dashboard")}</Text>
 
-        {/* search*/}
         <Searchbar
-          placeholder="Search orders by ID, name, or status..."
+          placeholder={t("search_placeholder")}
           value={searchQuery}
           onChangeText={setSearchQuery}
           style={styles.searchBar}
         />
 
-        {/* filter dashboard  */}
+        {/* status filter*/}
         <View style={styles.filtersContainer}>
-          {["All", ...STATUS_FLOW].map((f) => {
-            const isActive = activeFilter === f;
+          {["All", ...STATUS_FLOW].map((status) => {
+            const statusKey =
+              typeof status === "string" ? status.toLowerCase() : "unknown";
+            const label = t(statusKey);
+            const isActive = activeFilter === status;
+
             return (
               <TouchableOpacity
-                key={f}
+                key={status}
+                onPress={() => setActiveFilter(status)}
                 activeOpacity={0.8}
-                onPress={() => setActiveFilter(f)}
                 style={[
                   styles.filterCard,
                   {
-                    backgroundColor: isActive ? statusColor(f) : "#fff",
+                    backgroundColor: isActive ? statusColor(status) : "#fff",
                     shadowOpacity: isActive ? 0.25 : 0.1,
                     transform: [{ scale: isActive ? 1.05 : 1 }],
                   },
@@ -193,9 +210,9 @@ export default function AdminOrdersScreen() {
               >
                 <View style={styles.filterInner}>
                   <MaterialCommunityIcons
-                    name="clipboard-list-outline"
+                    name="filter-outline"
                     size={20}
-                    color={isActive ? "#fff" : statusColor(f)}
+                    color={isActive ? "#fff" : statusColor(status)}
                   />
                   <Text
                     style={[
@@ -203,23 +220,28 @@ export default function AdminOrdersScreen() {
                       { color: isActive ? "#fff" : "#333" },
                     ]}
                   >
-                    {f}
+                    {label}
                   </Text>
-                  {counts[f] !== undefined && (
+
+                  {counts?.[status] !== undefined && (
                     <View
                       style={[
                         styles.countBadge,
-                        { backgroundColor: isActive ? "#fff" : statusColor(f) },
+                        {
+                          backgroundColor: isActive
+                            ? "#fff"
+                            : statusColor(status),
+                        },
                       ]}
                     >
                       <Text
                         style={{
-                          color: isActive ? statusColor(f) : "#fff",
+                          color: isActive ? statusColor(status) : "#fff",
                           fontWeight: "700",
                           fontSize: 12,
                         }}
                       >
-                        {counts[f]}
+                        {counts[status]}
                       </Text>
                     </View>
                   )}
@@ -229,10 +251,10 @@ export default function AdminOrdersScreen() {
           })}
         </View>
 
-        {/* result counter*/}
+        {/* results*/}
         <View style={styles.resultsRow}>
           <Text style={styles.resultsText}>
-            Showing {list.length} result{list.length !== 1 ? "s" : ""}
+            {t("showing")} {list.length} {t("results")}
           </Text>
           <IconButton
             icon={sortDesc ? "sort-clock-descending" : "sort-clock-ascending"}
@@ -242,20 +264,20 @@ export default function AdminOrdersScreen() {
           />
         </View>
 
-        {/* list*/}
+        {/* oredr render*/}
         {loading ? (
           <View style={styles.center}>
-            <Text>Loading orders...</Text>
+            <Text>{t("loading_orders")}</Text>
           </View>
         ) : error ? (
           <View style={styles.center}>
             <Text style={{ color: "red" }}>{error}</Text>
-            <Button onPress={onRefresh}>Retry</Button>
+            <Button onPress={onRefresh}>{t("retry")}</Button>
           </View>
         ) : list.length === 0 ? (
           <View style={styles.center}>
-            <Text>No orders for "{activeFilter}"</Text>
-            <Button onPress={onRefresh}>Refresh</Button>
+            <Text>{t("no_orders")}</Text>
+            <Button onPress={onRefresh}>{t("refresh")}</Button>
           </View>
         ) : (
           <FlatList
@@ -269,7 +291,7 @@ export default function AdminOrdersScreen() {
           />
         )}
 
-        {/* Modal */}
+        {/* status history*/}
         <Portal>
           <Modal
             visible={!!selectedOrder}
@@ -277,10 +299,11 @@ export default function AdminOrdersScreen() {
             contentContainerStyle={styles.modal}
           >
             <Text style={{ fontWeight: "700", marginBottom: 8, fontSize: 16 }}>
-              Order #{selectedOrder?.orderNumber || selectedOrder?.id}
+              {t("order_id")}: #
+              {selectedOrder?.orderNumber || selectedOrder?.id}
             </Text>
             <Text style={{ marginBottom: 8, fontWeight: "600" }}>
-              Status History
+              {t("status_history")}
             </Text>
 
             {(selectedOrder?.statusHistory || [])
@@ -295,7 +318,9 @@ export default function AdminOrdersScreen() {
                     ]}
                   />
                   <View>
-                    <Text style={{ fontWeight: "600" }}>{h.status}</Text>
+                    <Text style={{ fontWeight: "600" }}>
+                      {t(h.status?.toLowerCase?.() || "unknown")}
+                    </Text>
                     <Text style={{ color: "#666", fontSize: 12 }}>
                       {new Date(h.changedAt).toLocaleString()}
                     </Text>
@@ -307,7 +332,7 @@ export default function AdminOrdersScreen() {
               onPress={() => setSelectedOrder(null)}
               style={{ marginTop: 16 }}
             >
-              Close
+              {t("close")}
             </Button>
           </Modal>
         </Portal>
@@ -320,16 +345,16 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#F9FAFB" },
   container: { flex: 1, padding: 12 },
   header: {
-    fontSize: 24,
+    fontSize: 27,
     fontWeight: "800",
     marginBottom: 16,
     color: "#263238",
+    textAlign: "center",
+    paddingTop: -1000,
   },
-  searchBar: {
-    marginBottom: 12,
-    borderRadius: 12,
-    elevation: 2,
-  },
+
+  langBtn: { borderRadius: 10 },
+  searchBar: { marginBottom: 12, borderRadius: 12, elevation: 2 },
   filtersContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -344,8 +369,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
   },
   filterInner: {
     flexDirection: "row",
@@ -368,10 +391,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     elevation: 2,
     backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
   },
   row: {
     flexDirection: "row",

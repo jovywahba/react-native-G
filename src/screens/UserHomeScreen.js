@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, FlatList } from "react-native";
+import { View, FlatList, I18nManager } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { db } from "../firebase";
 import {
@@ -22,8 +22,11 @@ import SearchBox from "../components/SearchBox";
 import CategoryList from "../components/CategoryList";
 import ProductCard from "../components/ProductCard";
 import colors from "../constants/colors";
+import { useTranslation } from "react-i18next";
 
 export default function UserHomeScreen({ navigation }) {
+  const { t, i18n } = useTranslation();
+
   const [products, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
@@ -36,7 +39,18 @@ export default function UserHomeScreen({ navigation }) {
   const user = auth.currentUser;
   const userId = user?.uid;
 
-  // ✅ Fetch products
+  // ✅ تغيير الاتجاه حسب اللغة
+  useEffect(() => {
+    if (i18n.language === "ar") {
+      I18nManager.allowRTL(true);
+      I18nManager.forceRTL(true);
+    } else {
+      I18nManager.allowRTL(false);
+      I18nManager.forceRTL(false);
+    }
+  }, [i18n.language]);
+
+  // ✅ تحميل المنتجات
   useEffect(() => {
     const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -47,7 +61,6 @@ export default function UserHomeScreen({ navigation }) {
     });
     return () => unsub();
   }, []);
-
 
   useEffect(() => {
     if (user) dispatch(fetchFavorites());
@@ -77,7 +90,7 @@ export default function UserHomeScreen({ navigation }) {
     filterProducts(search, cat);
   };
 
-  // ✅ Add to Cart
+  // ✅ إضافة إلى السلة
   const handleAddToCart = async (item) => {
     if (!userId) return;
     try {
@@ -97,7 +110,7 @@ export default function UserHomeScreen({ navigation }) {
     }
   };
 
-
+  // ✅ إزالة من السلة
   const handleRemoveFromCart = async (item) => {
     if (!userId) return;
     try {
@@ -115,7 +128,6 @@ export default function UserHomeScreen({ navigation }) {
     }
   };
 
-  
   useEffect(() => {
     const favoritesCount = favorites?.length || 0;
     navigation.setOptions({
@@ -139,16 +151,37 @@ export default function UserHomeScreen({ navigation }) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, padding: 16 }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        padding: 16,
+        direction: i18n.language === "ar" ? "rtl" : "ltr",
+      }}
+    >
       <Header />
-      <SearchBox search={search} setSearch={handleSearch} />
+      <SearchBox
+        search={search}
+        setSearch={handleSearch}
+        placeholder={t("search_placeholder")}
+      />
+
       <Text
         variant="titleMedium"
-        style={{ marginBottom: 10, color: colors.text }}
+        style={{
+          marginBottom: 10,
+          color: colors.text,
+          textAlign: i18n.language === "ar" ? "right" : "left",
+        }}
       >
-        Categories
+        {t("categories")}
       </Text>
-      <CategoryList selected={selected} setSelected={handleCategoryChange} />
+
+      <CategoryList
+        selected={selected}
+        setSelected={handleCategoryChange}
+        translate={t} // 🈯 تمرير الترجمة للفئات
+      />
 
       {filtered.length === 0 ? (
         <Text
@@ -158,7 +191,7 @@ export default function UserHomeScreen({ navigation }) {
             marginTop: 30,
           }}
         >
-          No products found
+          {t("no_products_found")}
         </Text>
       ) : (
         <FlatList
@@ -181,6 +214,7 @@ export default function UserHomeScreen({ navigation }) {
                 onToggleFavorite={(id) =>
                   dispatch(toggleFavoriteInFirebase(id))
                 }
+                translate={t} // 🈯 تمرير الترجمة للزرار
               />
             </View>
           )}
