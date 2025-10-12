@@ -140,7 +140,6 @@ export default function ProfileScreen({ navigation }) {
               style={styles.modalAvatar}
             />
 
-            {/* زر تغيير الصورة — أوضح وملون */}
             <TouchableOpacity
               onPress={pickImage}
               style={{

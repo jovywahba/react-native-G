@@ -4,7 +4,6 @@ import { ActivityIndicator, Text } from "react-native-paper";
 import { db } from "../firebase";
 import {
   collection,
-  onSnapshot,
   orderBy,
   query,
   addDoc,
@@ -12,6 +11,8 @@ import {
   deleteDoc,
   getDocs,
   where,
+  limit,
+  startAfter,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,6 +33,9 @@ export default function UserHomeScreen({ navigation }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const dispatch = useDispatch();
   const favorites = useSelector((state) => state.favorites.items || []);
@@ -39,7 +43,7 @@ export default function UserHomeScreen({ navigation }) {
   const user = auth.currentUser;
   const userId = user?.uid;
 
-  // ✅ تغيير الاتجاه حسب اللغة
+  // RTL setup
   useEffect(() => {
     if (i18n.language === "ar") {
       I18nManager.allowRTL(true);
@@ -50,18 +54,66 @@ export default function UserHomeScreen({ navigation }) {
     }
   }, [i18n.language]);
 
-  // ✅ تحميل المنتجات
+// Initial load of products
   useEffect(() => {
-    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setProducts(data);
-      setFiltered(data);
-      setLoading(false);
-    });
-    return () => unsub();
+    const loadInitial = async () => {
+      setLoading(true);
+      try {
+        const q = query(
+          collection(db, "products"),
+          orderBy("createdAt", "desc"),
+          limit(4)
+        );
+        const snap = await getDocs(q);
+        const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        setProducts(data);
+        setFiltered(data);
+        setLastDoc(snap.docs[snap.docs.length - 1]);
+        setHasMore(snap.docs.length === 4);
+      } catch (e) {
+        console.log("Error loading products:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitial();
   }, []);
 
+
+  //load more products for pagination
+  const loadMoreProducts = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const q = query(
+        collection(db, "products"),
+        orderBy("createdAt", "desc"),
+        startAfter(lastDoc),
+        limit(4)
+      );
+
+      const snap = await getDocs(q);
+      const newData = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+      setProducts((prev) => [...prev, ...newData]);
+      setFiltered((prev) => [...prev, ...newData]);
+
+      if (snap.docs.length < 4) {
+        setHasMore(false);
+      } else {
+        setLastDoc(snap.docs[snap.docs.length - 1]);
+      }
+    } catch (e) {
+      console.log("Error loading more products:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+//Favorites 
   useEffect(() => {
     if (user) dispatch(fetchFavorites());
   }, [user, dispatch]);
@@ -90,7 +142,6 @@ export default function UserHomeScreen({ navigation }) {
     filterProducts(search, cat);
   };
 
-  // ✅ إضافة إلى السلة
   const handleAddToCart = async (item) => {
     if (!userId) return;
     try {
@@ -110,7 +161,6 @@ export default function UserHomeScreen({ navigation }) {
     }
   };
 
-  // ✅ إزالة من السلة
   const handleRemoveFromCart = async (item) => {
     if (!userId) return;
     try {
@@ -180,7 +230,7 @@ export default function UserHomeScreen({ navigation }) {
       <CategoryList
         selected={selected}
         setSelected={handleCategoryChange}
-        translate={t} // 🈯 تمرير الترجمة للفئات
+        translate={t}
       />
 
       {filtered.length === 0 ? (
@@ -214,10 +264,21 @@ export default function UserHomeScreen({ navigation }) {
                 onToggleFavorite={(id) =>
                   dispatch(toggleFavoriteInFirebase(id))
                 }
-                translate={t} // 🈯 تمرير الترجمة للزرار
+                translate={t}
               />
             </View>
           )}
+          onEndReached={loadMoreProducts}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator
+                size="small"
+                color={colors.primary}
+                style={{ marginVertical: 16 }}
+              />
+            ) : null
+          }
         />
       )}
     </View>
