@@ -1,13 +1,18 @@
-import React from "react";
-import { View, I18nManager } from "react-native";
+import React, { useContext } from "react";
+import { View } from "react-native";
 import { Avatar, Text } from "react-native-paper";
 import { useTranslation } from "react-i18next";
 import colors from "../constants/colors";
+import { AuthContext } from "../context/AuthContext"; 
 
 const Header = () => {
   const { t, i18n } = useTranslation();
-
+  const { profile, user } = useContext(AuthContext);  
   const isRTL = i18n.language === "ar";
+
+  const avatarUrl =
+    profile?.photoURL ||
+    "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
   return (
     <View
@@ -18,10 +23,7 @@ const Header = () => {
         marginTop: 50,
       }}
     >
-      <Avatar.Image
-        size={45}
-        source={{ uri: "https://via.placeholder.com/100" }}
-      />
+      <Avatar.Image size={45} source={{ uri: avatarUrl }} />
 
       <View style={{ marginHorizontal: 10 }}>
         <Text
