@@ -3,57 +3,37 @@ import { db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-export const fetchFavorites = createAsyncThunk(
-  "favorites/fetchFavorites",
-  async () => {
-    const user = getAuth().currentUser;
-    if (!user) return [];
-    const docRef = doc(db, "favorites", user.uid);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? docSnap.data().items || [] : [];
-  }
-);
+export const fetchFavorites = createAsyncThunk("favorites/fetchFavorites", async () => {
+  const user = getAuth().currentUser;
+  if (!user) return [];
+  const snap = await getDoc(doc(db, "favorites", user.uid));
+  return snap.exists() ? snap.data().items || [] : [];
+});
 
 export const toggleFavoriteInFirebase = createAsyncThunk(
-  "favorites/toggleFavoriteInFirebase",
+"favorites/toggleFavoriteInFirebase",
   async (productId, { getState }) => {
     const user = getAuth().currentUser;
     if (!user) return [];
-
-    const currentFavs = getState().favorites.items || [];
-    let newFavs = [];
-
-    if (currentFavs.includes(productId)) {
-      newFavs = currentFavs.filter((id) => id !== productId);
-    } else {
-      newFavs = [...currentFavs, productId];
-    }
-
-    
+    const { items } = getState().favorites;
+    const newFavs = items.includes(productId)
+      ? items.filter((id) => id !== productId)
+      : [...items, productId];
     await setDoc(doc(db, "favorites", user.uid), { items: newFavs }, { merge: true });
-
     return newFavs;
   }
 );
 
 const favoritesSlice = createSlice({
   name: "favorites",
-  initialState: { items: [], status: "idle" },
-  reducers: {
-    // لحذف الفيفوريت عند تسجيل الخروج
-    clearFavorites: (state) => {
-      state.items = [];
-    },
-  },
+  initialState: { items: [] },
   extraReducers: (builder) => {
     builder
-      // عند تحميل الفيفوريت من فايربيز
       .addCase(fetchFavorites.fulfilled, (state, action) => {
-        state.items = Array.isArray(action.payload) ? action.payload : [];
+        state.items = action.payload || [];
       })
-      // عند التبديل (إضافة/حذف) الفيفوريت
       .addCase(toggleFavoriteInFirebase.fulfilled, (state, action) => {
-        state.items = Array.isArray(action.payload) ? action.payload : [];
+        state.items = action.payload || [];
       });
   },
 });

@@ -1,18 +1,9 @@
-// src/screens/CheckoutScreen.js
 import React, { useEffect, useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Alert } from "react-native";
 import { Appbar, Text, TextInput } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { db, auth } from "../firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
+import {collection,query,where,getDocs,addDoc,deleteDoc,doc,} from "firebase/firestore";
 import CartItem from "../components/CartItem";
 import CartFooter from "../components/CartFooter";
 import { useTranslation } from "react-i18next";
@@ -22,7 +13,6 @@ const CheckoutScreen = () => {
   const navigation = useNavigation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -32,24 +22,20 @@ const CheckoutScreen = () => {
       try {
         const user = auth.currentUser;
         if (!user) return;
-
         const cartRef = query(
           collection(db, "cart"),
           where("userId", "==", user.uid)
         );
         const snapshot = await getDocs(cartRef);
-
         const cartItems = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-
         setItems(cartItems);
       } catch (error) {
         console.error("Error loading cart:", error);
       }
     };
-
     fetchCart();
   }, []);
 
@@ -66,23 +52,18 @@ const CheckoutScreen = () => {
       Alert.alert(t("error"), t("user_not_logged_in"));
       return;
     }
-
     if (!fullName.trim() || !phone.trim() || !address.trim()) {
       Alert.alert(t("missing_info"), t("fill_required_fields"));
       return;
     }
-
     if (items.length === 0) {
       Alert.alert(t("empty_cart"), t("cart_is_empty"));
       return;
     }
-
     try {
       setLoading(true);
-
       const orderNumber = Math.floor(100000 + Math.random() * 900000);
       const now = new Date().toISOString();
-
       const orderData = {
         userId: user.uid,
         fullName: fullName.trim(),
@@ -98,7 +79,7 @@ const CheckoutScreen = () => {
           desc: i.desc || "",
           price: Number(i.price) || 0,
           quantity: Number(i.quantity) || 1,
-          image: i.image || null,
+          imageUrl: i.imageUrl || null,
         })),
         statusHistory: [
           {
@@ -109,14 +90,11 @@ const CheckoutScreen = () => {
       };
 
       await addDoc(collection(db, "orders"), orderData);
-
       for (const item of items) {
         await deleteDoc(doc(db, "cart", item.id));
       }
-
       navigation.navigate("Success");
     } catch (error) {
-      console.error("Error confirming order:", error);
       Alert.alert(t("error"), t("order_failed"));
     } finally {
       setLoading(false);
@@ -133,14 +111,11 @@ const CheckoutScreen = () => {
           onPress={() => navigation.goBack()}
         />
       </Appbar.Header>
-
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
         {items.map((item) => (
           <CartItem key={item.id} item={item} readonly />
         ))}
-
         <Text style={styles.formTitle}>{t("enter_shipping_details")}</Text>
-
         <TextInput
           label={t("full_name")}
           mode="outlined"
@@ -151,7 +126,6 @@ const CheckoutScreen = () => {
           outlineColor="#E5E5E5"
           activeOutlineColor="#395457"
         />
-
         <TextInput
           label={t("phone_number")}
           mode="outlined"
@@ -163,7 +137,6 @@ const CheckoutScreen = () => {
           activeOutlineColor="#395457"
           keyboardType="phone-pad"
         />
-
         <TextInput
           label={t("address")}
           mode="outlined"
@@ -175,7 +148,6 @@ const CheckoutScreen = () => {
           activeOutlineColor="#395457"
         />
       </ScrollView>
-
       <CartFooter
         title={loading ? t("processing") : t("confirm_order")}
         totaltext={t("total")}
@@ -187,9 +159,7 @@ const CheckoutScreen = () => {
     </View>
   );
 };
-
 export default CheckoutScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

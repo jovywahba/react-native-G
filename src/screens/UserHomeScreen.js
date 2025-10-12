@@ -59,11 +59,7 @@ export default function UserHomeScreen({ navigation }) {
     const loadInitial = async () => {
       setLoading(true);
       try {
-        const q = query(
-          collection(db, "products"),
-          orderBy("createdAt", "desc"),
-          limit(4)
-        );
+        const q = query(collection(db, "products"),orderBy("createdAt", "desc"),limit(4));
         const snap = await getDocs(q);
         const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
@@ -85,22 +81,13 @@ export default function UserHomeScreen({ navigation }) {
   //load more products for pagination
   const loadMoreProducts = async () => {
     if (loadingMore || !hasMore) return;
-
     setLoadingMore(true);
     try {
-      const q = query(
-        collection(db, "products"),
-        orderBy("createdAt", "desc"),
-        startAfter(lastDoc),
-        limit(4)
-      );
-
+      const q = query(collection(db, "products"),orderBy("createdAt", "desc"),startAfter(lastDoc),limit(4));
       const snap = await getDocs(q);
       const newData = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
       setProducts((prev) => [...prev, ...newData]);
       setFiltered((prev) => [...prev, ...newData]);
-
       if (snap.docs.length < 4) {
         setHasMore(false);
       } else {

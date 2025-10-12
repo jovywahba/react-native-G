@@ -20,11 +20,13 @@ export default function ProfileScreen() {
   const [me, setMe] = useState(profile);
   const [preview, setPreview] = useState(null);
 
-  const avatarUrl = preview || me?.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  const avatarUrl =
+    preview || me?.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
   const handleLogout = async () => {
     try {
-      await logout(); // do not navigate; RootNavigator switches to AuthStack
+      setVisible(false); // ✅ يقفل المودال قبل اللوج أوت
+      await logout(); // RootNavigator هيتحول تلقائيًا لـ AuthStack
     } catch (e) {
       Alert.alert("Error", e?.message || "Logout failed");
     }
@@ -32,26 +34,34 @@ export default function ProfileScreen() {
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") return Alert.alert("Permission required", "Please allow photo access.");
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9 });
+    if (status !== "granted")
+      return Alert.alert("Permission required", "Please allow photo access.");
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.9,
+    });
     if (!res.canceled) setPreview(res.assets[0].uri);
   };
 
   const upload = async (uri) => {
+    if (!user?.uid) return; // ✅ يمنع الخطأ بعد اللوج أوت
     const resp = await fetch(uri);
     const buf = await resp.arrayBuffer();
     const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
     const path = `avatars/${user.uid}_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, new Uint8Array(buf), {
-      contentType: resp.headers.get("Content-Type") || "image/jpeg",
-      upsert: false,
-    });
+    const { error } = await supabase.storage
+      .from(SUPABASE_BUCKET)
+      .upload(path, new Uint8Array(buf), {
+        contentType: resp.headers.get("Content-Type") || "image/jpeg",
+        upsert: false,
+      });
     if (error) throw error;
     const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
     return { photoURL: data.publicUrl, photoPath: path };
   };
 
   const save = async () => {
+    if (!user?.uid) return; // ✅ يمنع التنفيذ لو المستخدم خرج
     if (!username.trim() && !preview) return;
     try {
       setSaving(true);
@@ -79,6 +89,7 @@ export default function ProfileScreen() {
     );
   }
 
+  // ✅ منع الرندر لو المستخدم مش موجود بعد اللوج أوت
   if (!user) {
     return (
       <View style={styles.center}>
@@ -91,7 +102,13 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
         <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-        <TouchableOpacity style={styles.editIcon} onPress={() => { setUsername(me?.username || ""); setVisible(true); }}>
+        <TouchableOpacity
+          style={styles.editIcon}
+          onPress={() => {
+            setUsername(me?.username || "");
+            setVisible(true);
+          }}
+        >
           <MaterialCommunityIcons name="pencil" color={colors.white} size={18} />
         </TouchableOpacity>
       </View>
@@ -100,7 +117,12 @@ export default function ProfileScreen() {
       <Text style={styles.email}>{user.email}</Text>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <MaterialCommunityIcons name="logout" color="red" size={22} style={{ marginRight: 8 }} />
+        <MaterialCommunityIcons
+          name="logout"
+          color="red"
+          size={22}
+          style={{ marginRight: 8 }}
+        />
         <Text style={styles.logoutText}>{t("log_out")}</Text>
       </TouchableOpacity>
 
@@ -113,15 +135,31 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               onPress={pickImage}
-              style={{ marginTop: 8, marginBottom: 12, backgroundColor: colors.primary, paddingVertical: 12, borderRadius: 10, alignItems: "center" }}
+              style={{
+                marginTop: 8,
+                marginBottom: 12,
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                borderRadius: 10,
+                alignItems: "center",
+              }}
             >
-              <Text style={{ color: "#fff", fontWeight: "700" }}>{t("change_photo") || "Change Photo"}</Text>
+              <Text style={{ color: "#fff", fontWeight: "700" }}>
+                {t("change_photo") || "Change Photo"}
+              </Text>
             </TouchableOpacity>
 
-            <TextInput style={styles.input} placeholder={t("enter_new_username")} value={username} onChangeText={setUsername} />
+            <TextInput
+              style={styles.input}
+              placeholder={t("enter_new_username")}
+              value={username}
+              onChangeText={setUsername}
+            />
 
             <TouchableOpacity style={styles.saveButton} onPress={save} disabled={saving}>
-              <Text style={styles.saveText}>{saving ? t("saving") : t("save_changes")}</Text>
+              <Text style={styles.saveText}>
+                {saving ? t("saving") : t("save_changes")}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setVisible(false)}>

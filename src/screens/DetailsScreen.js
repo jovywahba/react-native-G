@@ -68,12 +68,12 @@ const DetailsScreen = ({ route, navigation }) => {
           </View>
         </View>
 
-        <Text style={styles.subtitle}>{product.category || "الفئة"}</Text>
+        <Text style={styles.subtitle}>{product.category || "Categorey"}</Text>
         <Text style={styles.description}>{product.description}</Text>
 
         <Divider style={{ marginVertical: 15 }} />
 
-        <Text style={styles.sectionTitle}>اللون</Text>
+        <Text style={styles.sectionTitle}>Color</Text>
         <View style={styles.colorRow}>
           {["#4E8C7E", "#B0B0B0", "#E53935"].map((color) => (
             <TouchableOpacity
@@ -130,7 +130,7 @@ const DetailsScreen = ({ route, navigation }) => {
             navigation.navigate("Cart");
           }}
         >
-          أضف إلى السلة ${product.price * quantity}
+          Add To Cart ${product.price * quantity}
         </Button>
       </View>
     </ScrollView>
