@@ -8,12 +8,14 @@ import { AuthContext } from "../context/AuthContext";
 
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
+
 import AdminHomeScreen from "../screens/AdminHomeScreen";
 import AddProductScreen from "../screens/AddProductScreen";
 import EditProductScreen from "../screens/EditProductScreen";
 import AdminProfileScreen from "../screens/AdminProfileScreen";
-import UserTabNavigator from "./UserTabNavigator";
 import AdminOrdersScreen from "../screens/AdminOrdersScreen";
+
+import UserTabNavigator from "./UserTabNavigator";
 
 const Stack = createStackNavigator();
 const AdminStack = createStackNavigator();
@@ -29,20 +31,12 @@ function AdminNavigator() {
       <AdminStack.Screen
         name="AddProduct"
         component={AddProductScreen}
-        options={{
-          title: "Add Product",
-          headerShown: true,
-          headerBackTitleVisible: false,
-        }}
+        options={{ title: "Add Product", headerBackTitleVisible: false }}
       />
       <AdminStack.Screen
         name="EditProduct"
         component={EditProductScreen}
-        options={{
-          title: "Edit Product",
-          headerShown: true,
-          headerBackTitleVisible: false,
-        }}
+        options={{ title: "Edit Product", headerBackTitleVisible: false }}
       />
       <AdminStack.Screen
         name="AdminOrders"
@@ -61,6 +55,7 @@ function AdminNavigator() {
 export default function RootNavigator() {
   const { user, profile, loading } = useContext(AuthContext);
 
+  // Splash while auth/profile loads
   if (loading || (user && !profile)) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -72,39 +67,23 @@ export default function RootNavigator() {
     );
   }
 
-  if (user && profile) {
-    const isAdmin = profile.userType === "admin";
-    return (
-      <NavigationContainer>
-        {isAdmin ? (
-          <AdminNavigator />
-        ) : (
-          <Stack.Navigator>
-            <Stack.Screen
-              name="UserTabs"
-              component={UserTabNavigator}
-              options={{ headerShown: false }}
-            />
-          </Stack.Navigator>
-        )}
-      </NavigationContainer>
-    );
-  }
-
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ title: "Login" }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
-          options={{ title: "Register" }}
-        />
-      </Stack.Navigator>
+      {!user ? (
+        // Auth stack
+        <Stack.Navigator>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: "Login" }} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Register" }} />
+        </Stack.Navigator>
+      ) : profile?.userType === "admin" ? (
+        // Admin stack
+        <AdminNavigator />
+      ) : (
+        // User tabs
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="UserTabs" component={UserTabNavigator} />
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 }

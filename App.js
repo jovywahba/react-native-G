@@ -9,6 +9,9 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import colors from "./src/constants/colors";
 import "./src/localization/i18n";
 import LanguageSwitcher from "./src/components/LanguageSwitcher";
+import 'react-native-get-random-values';
+import 'react-native-get-random-values';
+
 
 const theme = {
   ...MD3LightTheme,

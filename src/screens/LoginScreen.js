@@ -48,7 +48,7 @@ export default function LoginScreen({ navigation }) {
       <Controller
         control={control}
         name="identifier"
-        rules={{ required: "Required" }}
+        rules={{ required: "Enter your username or email" }}
         render={({ field: { onChange, value, onBlur } }) => (
           <>
             <TextInput
@@ -70,7 +70,7 @@ export default function LoginScreen({ navigation }) {
       <Controller
         control={control}
         name="password"
-        rules={{ required: "Required", minLength: { value: 6, message: "Min 6 chars" } }}
+        rules={{ required: "Enter your password", minLength: { value: 6, message: "Min 6 chars" } }}
         render={({ field: { onChange, value, onBlur } }) => (
           <>
             <TextInput
