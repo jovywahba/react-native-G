@@ -4,5 +4,5 @@ html, body, #root {
 }
 body {
   margin: 0;
-  overflow: auto; /* فعّل السكرول في صفحة الويب */
+  overflow: auto; 
 }
