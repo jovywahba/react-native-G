@@ -3,16 +3,7 @@ import { View, ScrollView, StyleSheet, Alert } from "react-native";
 import { Appbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { db, auth } from "../firebase";
-import {
-  collection,
-  onSnapshot,
-  updateDoc,
-  doc,
-  deleteDoc,
-  getDoc,
-  query,
-  where,
-} from "firebase/firestore";
+import {collection,onSnapshot,updateDoc,doc,deleteDoc,getDoc,query,where,} from "firebase/firestore";
 import CartItem from "../components/CartItem";
 import CartFooter from "../components/CartFooter";
 import { useTranslation } from "react-i18next";
@@ -148,10 +139,7 @@ const CartScreen = () => {
 
   return (
     <>
-      <Appbar.Header
-        style={{ backgroundColor: "#F9FAF9" }}
-        mode="center-aligned"
-      >
+      <Appbar.Header style={{ backgroundColor: "#F9FAF9" }} mode="center-aligned">
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title={t("tabs_cart")} />
         <Appbar.Action icon="delete" onPress={handleDeleteChecked} />
@@ -160,8 +148,7 @@ const CartScreen = () => {
       <View style={styles.container}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 180 }}
-        >
+          contentContainerStyle={{ paddingBottom: 180 }}>
           {items.map((item) => (
             <CartItem
               key={item.id}
@@ -172,7 +159,6 @@ const CartScreen = () => {
             />
           ))}
         </ScrollView>
-
         <CartFooter
           total={total}
           itemCount={itemCount}
@@ -187,7 +173,6 @@ const CartScreen = () => {
 };
 
 export default CartScreen;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAF9", padding: 10 },
 });

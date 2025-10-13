@@ -23,7 +23,6 @@ import UserOrdersScreen from "../screens/UserOrdersScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Stack خاص بالـ Home + Details
 function HomeStack() {
   const { t } = useTranslation();
 
@@ -60,7 +59,6 @@ function UserTabs() {
     return () => unsubscribe();
   }, []);
 
-  // تأكيد إن الفيفوريت مصفوفة فعلاً
   const favorites = useSelector((state) =>
     Array.isArray(state.favorites.items) ? state.favorites.items : []
   );
@@ -142,6 +140,13 @@ function UserTabs() {
         options={{
           tabBarLabel: t("tabs_orders"),
           headerTitle: t("tabs_orders"),
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons
+              name="alert-decagram-outline"
+              color={color}
+              size={26}
+            />
+          ),
         }}
       />
 

@@ -197,7 +197,7 @@ export default function UserOrdersScreen() {
                       style={{ flexDirection: "row", alignItems: "center" }}
                     >
                       <Image
-                        source={{ uri: item.items[0].image }}
+                        source={{ uri: item.items[0].imageUrl }}
                         style={{
                           width: 60,
                           height: 60,
