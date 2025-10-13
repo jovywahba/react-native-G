@@ -29,7 +29,7 @@ const DetailsScreen = ({ route, navigation }) => {
   const toggleFavorite = async () => {
     if (!user) return;
     try {
-      await dispatch(toggleFavoriteInFirebase(product.id)).unwrap();
+      await dispatch(toggleFavoriteInFirebase(product.id));
       await dispatch(fetchFavorites());
     } catch (error) {
       console.error("Error updating favorites:", error);
