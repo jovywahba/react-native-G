@@ -26,7 +26,7 @@ export default function AuthProvider({ children }) {
         const snap = await getDoc(ref);
 
         if (!snap.exists()) {
-          // ✨ أنشئ بروفايل افتراضي لو مش موجود
+          // ✨ إنشاء بروفايل افتراضي لو مش موجود
           const username =
             u.displayName ||
             (u.email ? u.email.split("@")[0] : `user_${u.uid.slice(0, 6)}`);
@@ -41,17 +41,13 @@ export default function AuthProvider({ children }) {
             updatedAt: serverTimestamp(),
           };
 
-          // المستخدم مسموح له يكتب وثيقته حسب القواعد
           await setDoc(ref, newProfile);
-
-          // عيّنها محليًا فورًا (createdAt هيبقى Timestamp لاحقًا)
           setProfile({ ...newProfile });
         } else {
           setProfile(snap.data());
         }
       } catch (e) {
         console.warn("Auth bootstrap error:", e?.message);
-        // ما نحبسّش التنقل لو حصلت مشكلة قراءة البروفايل
         setProfile(null);
       } finally {
         setLoading(false);
@@ -61,12 +57,23 @@ export default function AuthProvider({ children }) {
     return () => unsub();
   }, []);
 
+  // ✅ Logout محسّن
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setProfile(null);
+    } catch (e) {
+      console.error("Logout error:", e?.message);
+    }
+  };
+
   const value = useMemo(
     () => ({
       user,
       profile,
       loading,
-      logout: () => signOut(auth),
+      logout,
     }),
     [user, profile, loading]
   );

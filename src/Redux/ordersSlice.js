@@ -11,13 +11,28 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
+// ✅ Helper: يحوّل أي Firestore Timestamp إلى string
+const convertTimestamps = (obj) => {
+  if (!obj || typeof obj !== "object") return obj;
+  if (obj.toDate) return obj.toDate().toISOString(); // Firestore Timestamp
+  const newObj = Array.isArray(obj) ? [] : {};
+  for (const key in obj) {
+    newObj[key] = convertTimestamps(obj[key]);
+  }
+  return newObj;
+};
+
+// 🔹 Get All Orders Once
 export const fetchOrdersOnce = createAsyncThunk(
   "orders/fetchOrdersOnce",
   async (_, { rejectWithValue }) => {
     try {
       const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
       const snap = await getDocs(q);
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const list = snap.docs.map((d) => {
+        const data = convertTimestamps(d.data());
+        return { id: d.id, ...data };
+      });
       return list;
     } catch (err) {
       return rejectWithValue(err.message || "Failed to fetch orders");
@@ -25,7 +40,7 @@ export const fetchOrdersOnce = createAsyncThunk(
   }
 );
 
-// Thunk    update satus Firestore (   statusHistory)
+// 🔹 Update Order Status on Server
 export const updateOrderStatusOnServer = createAsyncThunk(
   "orders/updateOrderStatusOnServer",
   async ({ orderId, newStatus }, { rejectWithValue }) => {
@@ -40,6 +55,7 @@ export const updateOrderStatusOnServer = createAsyncThunk(
         }),
         updatedAt: serverTimestamp(),
       });
+
       return { orderId, newStatus, changedAt: new Date().toISOString() };
     } catch (err) {
       return rejectWithValue(err.message || "Failed to update status");
@@ -47,16 +63,18 @@ export const updateOrderStatusOnServer = createAsyncThunk(
   }
 );
 
+// 🔹 Slice
 const ordersSlice = createSlice({
   name: "orders",
   initialState: {
-    items: [], // array of orders
+    items: [],
     loading: false,
     error: null,
   },
   reducers: {
     setOrders(state, action) {
-      state.items = action.payload;
+      // تنظيف أي Timestamp حتى لو دخل من dispatch خارجي
+      state.items = convertTimestamps(action.payload);
     },
     setLoading(state, action) {
       state.loading = action.payload;
@@ -64,7 +82,6 @@ const ordersSlice = createSlice({
     setError(state, action) {
       state.error = action.payload;
     },
-    // تحديث محلي سريع (optimistic) — مفيد لردود فعل UI سريعة
     updateOrderLocal(state, action) {
       const { orderId, newStatus, changedAt } = action.payload;
       const idx = state.items.findIndex((o) => o.id === orderId);
@@ -84,14 +101,13 @@ const ordersSlice = createSlice({
       })
       .addCase(fetchOrdersOnce.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = convertTimestamps(action.payload);
       })
       .addCase(fetchOrdersOnce.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
       })
       .addCase(updateOrderStatusOnServer.rejected, (state, action) => {
-        // في حالة فشل السيرفر، نخزن الخطأ (undo سيتم من خلال إعادة الجلب عبر listener)
         state.error = action.payload || action.error.message;
       });
   },
@@ -99,4 +115,5 @@ const ordersSlice = createSlice({
 
 export const { setOrders, setLoading, setError, updateOrderLocal } =
   ordersSlice.actions;
+
 export default ordersSlice.reducer;
