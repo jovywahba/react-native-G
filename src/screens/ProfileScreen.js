@@ -1,5 +1,14 @@
 import React, { useContext, useState } from "react";
-import { View, Text, Image, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+  Alert,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
@@ -10,7 +19,7 @@ import colors from "../constants/colors";
 import styles from "../styles/ProfileScreen.styles";
 import { useTranslation } from "react-i18next";
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }) {
   const { t } = useTranslation();
   const { user, profile, loading, logout } = useContext(AuthContext);
 
@@ -21,12 +30,15 @@ export default function ProfileScreen() {
   const [preview, setPreview] = useState(null);
 
   const avatarUrl =
-    preview || me?.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+    me?.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
+  // ✅ تسجيل الخروج مع تنظيف الحالة لتفادي أي بقايا بيانات
   const handleLogout = async () => {
     try {
-      setVisible(false); // ✅ يقفل المودال قبل اللوج أوت
-      await logout(); // RootNavigator هيتحول تلقائيًا لـ AuthStack
+      await logout();
+      setMe(null);
+      setUsername("");
+      setPreview(null);
     } catch (e) {
       Alert.alert("Error", e?.message || "Logout failed");
     }
@@ -34,8 +46,10 @@ export default function ProfileScreen() {
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted")
-      return Alert.alert("Permission required", "Please allow photo access.");
+    if (status !== "granted") {
+      Alert.alert("Permission required", "Please allow photo access.");
+      return;
+    }
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.9,
@@ -43,17 +57,27 @@ export default function ProfileScreen() {
     if (!res.canceled) setPreview(res.assets[0].uri);
   };
 
+  // ✅ تحقق آمن لو المستخدم null بعد تسجيل الخروج
   const upload = async (uri) => {
-    if (!user?.uid) return; // ✅ يمنع الخطأ بعد اللوج أوت
-    const resp = await fetch(uri);
-    const buf = await resp.arrayBuffer();
-    const ext = uri.split(".").pop()?.toLowerCase() || "jpg";
+    if (!user || !user.uid) {
+      throw new Error("User not logged in");
+    }
+
+    const blob = await (await fetch(uri)).blob();
+    const ext =
+      uri.split(".").pop()?.toLowerCase() ||
+      (blob.type.includes("png")
+        ? "png"
+        : blob.type.includes("webp")
+        ? "webp"
+        : "jpg");
+
     const path = `avatars/${user.uid}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage
       .from(SUPABASE_BUCKET)
-      .upload(path, new Uint8Array(buf), {
-        contentType: resp.headers.get("Content-Type") || "image/jpeg",
+      .upload(path, blob, {
         upsert: false,
+        contentType: blob.type || "image/jpeg",
       });
     if (error) throw error;
     const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
@@ -61,17 +85,25 @@ export default function ProfileScreen() {
   };
 
   const save = async () => {
-    if (!user?.uid) return; // ✅ يمنع التنفيذ لو المستخدم خرج
     if (!username.trim() && !preview) return;
+
     try {
       setSaving(true);
+      if (!user || !user.uid) {
+        throw new Error("User not logged in");
+      }
+
       const ref = doc(db, "users", user.uid);
       const patch = {};
+
       if (username.trim()) patch.username = username.trim();
       if (preview) Object.assign(patch, await upload(preview));
+
       if (Object.keys(patch).length) await updateDoc(ref, patch);
+
       const snap = await getDoc(ref);
       if (snap.exists()) setMe(snap.data());
+
       setPreview(null);
       setVisible(false);
     } catch (e) {
@@ -89,7 +121,6 @@ export default function ProfileScreen() {
     );
   }
 
-  // ✅ منع الرندر لو المستخدم مش موجود بعد اللوج أوت
   if (!user) {
     return (
       <View style={styles.center}>
@@ -106,10 +137,15 @@ export default function ProfileScreen() {
           style={styles.editIcon}
           onPress={() => {
             setUsername(me?.username || "");
+            setPreview(null);
             setVisible(true);
           }}
         >
-          <MaterialCommunityIcons name="pencil" color={colors.white} size={18} />
+          <MaterialCommunityIcons
+            name="pencil"
+            color={colors.white}
+            size={18}
+          />
         </TouchableOpacity>
       </View>
 
@@ -126,12 +162,16 @@ export default function ProfileScreen() {
         <Text style={styles.logoutText}>{t("log_out")}</Text>
       </TouchableOpacity>
 
+      {/* Edit Modal */}
       <Modal visible={visible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t("edit_profile")}</Text>
 
-            <Image source={{ uri: avatarUrl }} style={styles.modalAvatar} />
+            <Image
+              source={{ uri: preview || me?.photoURL || avatarUrl }}
+              style={styles.modalAvatar}
+            />
 
             <TouchableOpacity
               onPress={pickImage}
@@ -156,7 +196,11 @@ export default function ProfileScreen() {
               onChangeText={setUsername}
             />
 
-            <TouchableOpacity style={styles.saveButton} onPress={save} disabled={saving}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={save}
+              disabled={saving}
+            >
               <Text style={styles.saveText}>
                 {saving ? t("saving") : t("save_changes")}
               </Text>
