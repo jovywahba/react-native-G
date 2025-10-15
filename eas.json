@@ -5,26 +5,20 @@
   "build": {
     "production": {
       "env": {
-        "EAS_BUILD_SKIP_CACHE": "true"
-      },
-      "node": "18.17.0",
-      "npm": "9.6.7",
-      "dependencies": {
-        "installCommand": "npm install"
+        "EAS_ENABLE_NPM_CI": "0",
+        "EAS_BUILD_SKIP_CACHE": "1"
       }
     },
     "preview": {
-      "node": "18.17.0",
-      "npm": "9.6.7",
-      "dependencies": {
-        "installCommand": "npm install"
+      "env": {
+        "EAS_ENABLE_NPM_CI": "0",
+        "EAS_BUILD_SKIP_CACHE": "1"
       }
     },
     "development": {
-      "node": "18.17.0",
-      "npm": "9.6.7",
-      "dependencies": {
-        "installCommand": "npm install"
+      "env": {
+        "EAS_ENABLE_NPM_CI": "0",
+        "EAS_BUILD_SKIP_CACHE": "1"
       }
     }
   }
