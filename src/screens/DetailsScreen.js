@@ -127,7 +127,7 @@ const DetailsScreen = ({ route, navigation }) => {
               createdAt: new Date(),
             });
 
-            navigation.navigate("Cart");
+            navigation.navigate("MainTabs", { screen: "Cart" });
           }}
         >
           Add To Cart ${product.price * quantity}
