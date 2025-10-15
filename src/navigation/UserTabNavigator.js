@@ -33,11 +33,6 @@ function HomeStack() {
         component={UserHomeScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="DetailsScreen"
-        component={DetailsScreen}
-        options={{ title: t("product_details") }}
-      />
     </Stack.Navigator>
   );
 }
@@ -169,11 +164,20 @@ function UserTabs() {
 }
 
 export default function UserTabNavigator() {
+  const { t } = useTranslation();
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={UserTabs} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="Success" component={SuccessOrderScreen} />
+
+      {/* ✅ إضافة DetailsScreen هنا بحيث تكون متاحة من أي تبويب */}
+      <Stack.Screen
+        name="DetailsScreen"
+        component={DetailsScreen}
+        options={{ headerShown: true, title: t("product_details") }}
+      />
     </Stack.Navigator>
   );
 }

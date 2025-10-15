@@ -32,7 +32,7 @@ export default function ProfileScreen({ navigation }) {
   const avatarUrl =
     me?.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-  // ✅ تسجيل الخروج مع تنظيف الحالة لتفادي أي بقايا بيانات
+  // ✅ تسجيل الخروج مع تنظيف الحالة
   const handleLogout = async () => {
     try {
       await logout();
@@ -57,7 +57,7 @@ export default function ProfileScreen({ navigation }) {
     if (!res.canceled) setPreview(res.assets[0].uri);
   };
 
-  // ✅ تحقق آمن لو المستخدم null بعد تسجيل الخروج
+  // ✅ رفع الصورة بأمان مع تحقق من المستخدم
   const upload = async (uri) => {
     if (!user || !user.uid) {
       throw new Error("User not logged in");
@@ -79,19 +79,24 @@ export default function ProfileScreen({ navigation }) {
         upsert: false,
         contentType: blob.type || "image/jpeg",
       });
+
     if (error) throw error;
+
     const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
     return { photoURL: data.publicUrl, photoPath: path };
   };
 
+  // ✅ حفظ التغييرات بأمان
   const save = async () => {
+    if (!user || !user.uid) {
+      Alert.alert("Error", "User not logged in");
+      return;
+    }
+
     if (!username.trim() && !preview) return;
 
     try {
       setSaving(true);
-      if (!user || !user.uid) {
-        throw new Error("User not logged in");
-      }
 
       const ref = doc(db, "users", user.uid);
       const patch = {};
@@ -113,6 +118,7 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
+  // ✅ أثناء التحميل
   if (loading) {
     return (
       <View style={styles.center}>
@@ -121,6 +127,7 @@ export default function ProfileScreen({ navigation }) {
     );
   }
 
+  // ✅ لما مفيش مستخدم
   if (!user) {
     return (
       <View style={styles.center}>
